@@ -1200,11 +1200,15 @@ class _EmptyStateState extends State<_EmptyState> {
             children: [
               Text(
                 widget.isDatabaseEmpty
-                    ? 'قاعدة بيانات الأماكن فارغة حالياً.\nيمكنك استيراد مجموعة الأماكن الأولية المعتمدة في القاهرة والجيزة للبدء فوراً.'
+                    ? (currentUserIsModerator
+                        ? 'قاعدة بيانات الأماكن فارغة حالياً.\nيمكنك استيراد مجموعة الأماكن الأولية المعتمدة في القاهرة والجيزة للبدء فوراً.'
+                        : 'الأماكن المجهزة هتظهر هنا أول ما تتضاف.\nجرب تاني بعد شوية.')
                     : widget.message,
                 textAlign: TextAlign.center,
               ),
-              if (widget.isDatabaseEmpty) ...[
+              // Only admins/moderators can seed: Firestore rules deny the
+              // write for regular users, so we never show them the button.
+              if (widget.isDatabaseEmpty && currentUserIsModerator) ...[
                 const SizedBox(height: 16),
                 FilledButton.icon(
                   onPressed: _loading ? null : _seed,
@@ -1218,8 +1222,8 @@ class _EmptyStateState extends State<_EmptyState> {
                   Text(_status!,
                       style: TextStyle(
                           color: _status!.contains('نجاح')
-                              ? Colors.green
-                              : Colors.red),
+                              ? FlutterFlowTheme.of(context).success
+                              : FlutterFlowTheme.of(context).error),
                       textAlign: TextAlign.center),
                 ],
               ],

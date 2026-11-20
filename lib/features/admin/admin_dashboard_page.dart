@@ -110,6 +110,13 @@ class _OverviewTabState extends State<_OverviewTab> {
         setState(() =>
             _seedingMessage = 'تم بنجاح إضافة $count أماكن أولية معتمدة!');
       }
+    } on FirebaseException catch (error) {
+      if (mounted) {
+        setState(() => _seedingMessage = error.code == 'permission-denied'
+            ? 'الحساب الحالي ليس له صلاحية الأدمن في Firestore بعد. '
+                'فعّل دور الأدمن من صفحة /admin/setup ثم أعد تحميل التطبيق.'
+            : 'خطأ أثناء الاستيراد: ${error.message ?? error.code}');
+      }
     } catch (e) {
       if (mounted) {
         setState(() => _seedingMessage = 'خطأ أثناء الاستيراد: $e');
