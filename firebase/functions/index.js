@@ -58,9 +58,129 @@ async function grantInitialSuperAdmin(user) {
   return true;
 }
 
+// ============================================================================
+// Designated-admin allowlist
+// The owner designates admin emails in one Firestore document:
+//   admin_config/allowed_admin_emails  ->  { emails: ["a@x.com", ...] }
+// It is readable and writable only through the Admin SDK (Firestore rules
+// default-deny it for clients). New registrations on a listed email become
+// admin automatically; existing accounts can call claimDesignatedAdminRole.
+// ============================================================================
+
+const ALLOWLIST_DOC = "admin_config/allowed_admin_emails";
+
+async function readAllowedAdminEmails() {
+  const snap = await db.doc(ALLOWLIST_DOC).get();
+  const emails = snap.exists ? snap.data().emails : null;
+  if (!Array.isArray(emails)) return new Set();
+  return new Set(
+    emails.map((e) => String(e).trim().toLowerCase()).filter((e) => e.length > 0),
+  );
+}
+
+async function grantAllowlistedAdmin(user) {
+  const email = (user.email || "").trim().toLowerCase();
+  if (!email) return false;
+  const allowed = await readAllowedAdminEmails();
+  if (!allowed.has(email)) return false;
+
+  await admin.auth().setCustomUserClaims(user.uid, { superAdmin: false, role: "admin" });
+  await db.collection("users").doc(user.uid).set(
+    {
+      uid: user.uid,
+      email: user.email || null,
+      role: "admin",
+      updated_time: admin.firestore.FieldValue.serverTimestamp(),
+    },
+    { merge: true },
+  );
+  await writeAuditLog({
+    actorUid: user.uid,
+    action: "allowlisted_admin_granted",
+    targetUid: user.uid,
+    metadata: { source: "admin-email-allowlist" },
+  });
+  return true;
+}
+
 // Runs for future registrations. Existing owner accounts can call
 // bootstrapInitialSuperAdmin after the runtime configuration is deployed.
-exports.onUserCreated = functions.auth.user().onCreate(grantInitialSuperAdmin);
+exports.onUserCreated = functions.auth.user().onCreate(async (user) => {
+  const becameSuperAdmin = await grantInitialSuperAdmin(user);
+  if (!becameSuperAdmin) {
+    await grantAllowlistedAdmin(user);
+  }
+});
+
+// Any signed-in user may ask; the server grants only when their email is the
+// configured initial admin or is on the owner-designated allowlist. Existing
+// accounts use this after their email is added to the list.
+exports.claimDesignatedAdminRole = functions.https.onCall(async (_data, context) => {
+  if (!context.auth?.uid || !context.auth.token.email) {
+    throw new functions.https.HttpsError("unauthenticated", "Authentication is required.");
+  }
+  const user = await admin.auth().getUser(context.auth.uid);
+  if (await grantInitialSuperAdmin(user)) {
+    return { role: "superAdmin", refreshTokenRequired: true };
+  }
+  if (await grantAllowlistedAdmin(user)) {
+    return { role: "admin", refreshTokenRequired: true };
+  }
+  throw new functions.https.HttpsError(
+    "permission-denied",
+    "This email is not designated as an administrator.",
+  );
+});
+
+// Only the super admin manages the designated-admin email list.
+exports.addAllowedAdminEmail = functions.https.onCall(async (data, context) => {
+  if (!isSuperAdmin(context)) {
+    throw new functions.https.HttpsError("permission-denied", "Super administrator role required.");
+  }
+  const email = typeof data.email === "string" ? data.email.trim().toLowerCase() : "";
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+    throw new functions.https.HttpsError("invalid-argument", "A valid email address is required.");
+  }
+  await db.doc(ALLOWLIST_DOC).set(
+    { emails: admin.firestore.FieldValue.arrayUnion(email) },
+    { merge: true },
+  );
+  await writeAuditLog({
+    actorUid: context.auth.uid,
+    action: "admin_email_allowlisted",
+    targetUid: context.auth.uid,
+    metadata: { email },
+  });
+  return { email };
+});
+
+exports.removeAllowedAdminEmail = functions.https.onCall(async (data, context) => {
+  if (!isSuperAdmin(context)) {
+    throw new functions.https.HttpsError("permission-denied", "Super administrator role required.");
+  }
+  const email = typeof data.email === "string" ? data.email.trim().toLowerCase() : "";
+  if (!email) {
+    throw new functions.https.HttpsError("invalid-argument", "Email is required.");
+  }
+  await db.doc(ALLOWLIST_DOC).set(
+    { emails: admin.firestore.FieldValue.arrayRemove(email) },
+    { merge: true },
+  );
+  await writeAuditLog({
+    actorUid: context.auth.uid,
+    action: "admin_email_removed_from_allowlist",
+    targetUid: context.auth.uid,
+    metadata: { email },
+  });
+  return { email };
+});
+
+exports.listAllowedAdminEmails = functions.https.onCall(async (_data, context) => {
+  if (!isSuperAdmin(context)) {
+    throw new functions.https.HttpsError("permission-denied", "Super administrator role required.");
+  }
+  return { emails: Array.from(await readAllowedAdminEmails()).sort() };
+});
 
 // Allows only the configured account to bootstrap its own claim. No arbitrary
 // email or UID is accepted from the client.
