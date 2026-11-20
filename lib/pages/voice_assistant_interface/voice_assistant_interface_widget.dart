@@ -345,8 +345,8 @@ class _VoiceAssistantInterfaceWidgetState
                           ),
                           Row(
                             children: [
-                              const Icon(Icons.auto_awesome,
-                                  color: Colors.amber, size: 22),
+                              Icon(Icons.auto_awesome,
+                                  color: theme.tertiary, size: 22),
                               const SizedBox(width: 8),
                               Text(
                                 'ONEWAY AI Assistant',

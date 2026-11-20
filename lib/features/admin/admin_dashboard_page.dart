@@ -39,13 +39,14 @@ class _AdminDashboardPageState extends State<AdminDashboardPage>
 
   @override
   Widget build(BuildContext context) {
+    final theme = FlutterFlowTheme.of(context);
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
         appBar: AppBar(
-          title: const Row(
+          title: Row(
             children: [
-              Icon(Icons.admin_panel_settings, color: Colors.amber),
+              Icon(Icons.admin_panel_settings, color: theme.tertiary),
               SizedBox(width: 8),
               Text(
                 'لوحة تحكم الإدارة - ONEWAY',
@@ -57,9 +58,9 @@ class _AdminDashboardPageState extends State<AdminDashboardPage>
             controller: _tabController,
             isScrollable: true,
             tabAlignment: TabAlignment.start,
-            indicatorColor: Colors.amber,
-            labelColor: Colors.amber,
-            unselectedLabelColor: Colors.white70,
+            indicatorColor: theme.tertiary,
+            labelColor: theme.tertiary,
+            unselectedLabelColor: theme.onPrimary.withValues(alpha: 0.75),
             tabs: const [
               Tab(icon: Icon(Icons.analytics_outlined), text: 'المؤشرات'),
               Tab(icon: Icon(Icons.assignment_late_outlined), text: 'البلاغات'),
@@ -120,21 +121,22 @@ class _OverviewTabState extends State<_OverviewTab> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = FlutterFlowTheme.of(context);
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
         // Admin Greeting & Role Badge
         Card(
-          color: const Color(0xFF1E293B),
+          color: theme.primaryDark,
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Row(
               children: [
-                const CircleAvatar(
+                CircleAvatar(
                   radius: 28,
-                  backgroundColor: Colors.amber,
+                  backgroundColor: theme.tertiary,
                   child: Icon(Icons.shield, color: Colors.black87, size: 30),
                 ),
                 const SizedBox(width: 14),
@@ -155,22 +157,22 @@ class _OverviewTabState extends State<_OverviewTab> {
                       const SizedBox(height: 4),
                       Text(
                         currentUserEmail,
-                        style: const TextStyle(
-                            color: Colors.white70, fontSize: 13),
+                        style: TextStyle(
+                            color: theme.onPrimary.withValues(alpha: 0.75), fontSize: 13),
                       ),
                       const SizedBox(height: 6),
                       Container(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 10, vertical: 3),
                         decoration: BoxDecoration(
-                          color: Colors.amber.withValues(alpha: 0.2),
+                          color: theme.tertiary.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.amber, width: 1),
+                          border: Border.all(color: theme.tertiary, width: 1),
                         ),
-                        child: const Text(
+                        child: Text(
                           'حساب مصرح بكامل الصلاحيات (Admin)',
                           style: TextStyle(
-                            color: Colors.amber,
+                            color: theme.tertiary,
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
                           ),
@@ -197,7 +199,7 @@ class _OverviewTabState extends State<_OverviewTab> {
               child: _StatCard(
                 title: 'الأماكن المسجلة',
                 icon: Icons.place,
-                color: Colors.teal,
+                color: theme.primary,
                 stream: PlacesRecord.collection.snapshots(),
                 subtitle: (count) => '$count مكان متاح',
                 onTap: () => widget.onNavigateToTab(2),
@@ -208,7 +210,7 @@ class _OverviewTabState extends State<_OverviewTab> {
               child: _StatCard(
                 title: 'بلاغات العوائق',
                 icon: Icons.assignment_late,
-                color: Colors.orange,
+                color: theme.warning,
                 stream: AccessibilityReportsRecord.collection.snapshots(),
                 subtitle: (count) => '$count بلاغ وارد',
                 onTap: () => widget.onNavigateToTab(1),
@@ -223,7 +225,7 @@ class _OverviewTabState extends State<_OverviewTab> {
               child: _StatCard(
                 title: 'المستخدمين',
                 icon: Icons.people,
-                color: Colors.indigo,
+                color: theme.info,
                 stream: UsersRecord.collection.snapshots(),
                 subtitle: (count) => '$count حساب مسجل',
                 onTap: () => widget.onNavigateToTab(3),
@@ -234,7 +236,7 @@ class _OverviewTabState extends State<_OverviewTab> {
               child: _StatCard(
                 title: 'تقييمات الإتاحة',
                 icon: Icons.star,
-                color: Colors.amber.shade800,
+                color: theme.tertiaryDark,
                 stream: ReviewsRecord.collection.snapshots(),
                 subtitle: (count) => '$count تقييم معتمد',
                 onTap: () => widget.onNavigateToTab(2),
@@ -255,9 +257,9 @@ class _OverviewTabState extends State<_OverviewTab> {
           child: Column(
             children: [
               ListTile(
-                leading: const CircleAvatar(
-                  backgroundColor: Color(0xFFE0F2FE),
-                  child: Icon(Icons.add_location_alt, color: Colors.blue),
+                leading: CircleAvatar(
+                  backgroundColor: theme.infoContainer,
+                  child: Icon(Icons.add_location_alt, color: theme.info),
                 ),
                 title: const Text('إضافة مكان مجهز جديد'),
                 subtitle: const Text(
@@ -267,9 +269,9 @@ class _OverviewTabState extends State<_OverviewTab> {
               ),
               const Divider(height: 1),
               ListTile(
-                leading: const CircleAvatar(
-                  backgroundColor: Color(0xFFFEF3C7),
-                  child: Icon(Icons.cloud_upload_outlined, color: Colors.amber),
+                leading: CircleAvatar(
+                  backgroundColor: theme.tertiaryLight,
+                  child: Icon(Icons.cloud_upload_outlined, color: theme.tertiary),
                 ),
                 title: const Text('استيراد الأماكن المعتمدة الأولية'),
                 subtitle:
@@ -284,9 +286,9 @@ class _OverviewTabState extends State<_OverviewTab> {
               ),
               const Divider(height: 1),
               ListTile(
-                leading: const CircleAvatar(
-                  backgroundColor: Color(0xFFFEE2E2),
-                  child: Icon(Icons.assignment_late, color: Colors.red),
+                leading: CircleAvatar(
+                  backgroundColor: theme.errorContainer,
+                  child: Icon(Icons.assignment_late, color: theme.error),
                 ),
                 title: const Text('مراجعة بلاغات العوائق المعلقة'),
                 subtitle:
@@ -303,16 +305,16 @@ class _OverviewTabState extends State<_OverviewTab> {
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: _seedingMessage!.contains('بنجاح')
-                  ? Colors.green.shade50
-                  : Colors.red.shade50,
+                  ? theme.successContainer
+                  : theme.errorContainer,
               borderRadius: BorderRadius.circular(10),
             ),
             child: Text(
               _seedingMessage!,
               style: TextStyle(
                 color: _seedingMessage!.contains('بنجاح')
-                    ? Colors.green.shade800
-                    : Colors.red.shade800,
+                    ? theme.onSuccessContainer
+                    : theme.onErrorContainer,
                 fontWeight: FontWeight.bold,
               ),
               textAlign: TextAlign.center,
@@ -343,6 +345,7 @@ class _StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = FlutterFlowTheme.of(context);
     return StreamBuilder<QuerySnapshot>(
       stream: stream,
       builder: (context, snapshot) {
@@ -386,7 +389,7 @@ class _StatCard extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   subtitle(count),
-                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                  style: TextStyle(fontSize: 12, color: theme.secondaryText),
                 ),
               ],
             ),
@@ -498,6 +501,7 @@ class _ReportsModerationTabState extends State<_ReportsModerationTab> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = FlutterFlowTheme.of(context);
     return Column(
       children: [
         // Filter Chips
@@ -623,20 +627,20 @@ class _ReportsModerationTabState extends State<_ReportsModerationTab> {
                           const SizedBox(height: 6),
                           Row(
                             children: [
-                              const Icon(Icons.category,
-                                  size: 16, color: Colors.grey),
+                              Icon(Icons.category,
+                                  size: 16, color: theme.secondaryText),
                               const SizedBox(width: 4),
                               Text(
                                 report.problemCategory,
-                                style: const TextStyle(
+                                style: TextStyle(
                                     fontWeight: FontWeight.bold,
-                                    color: Colors.teal),
+                                    color: theme.primary),
                               ),
                               const Spacer(),
                               Text(
                                 'بواسطة: ${report.userName.isEmpty ? "مستخدم" : report.userName}',
-                                style: const TextStyle(
-                                    fontSize: 12, color: Colors.grey),
+                                style: TextStyle(
+                                    fontSize: 12, color: theme.secondaryText),
                               ),
                             ],
                           ),
@@ -644,7 +648,7 @@ class _ReportsModerationTabState extends State<_ReportsModerationTab> {
                           Container(
                             padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
-                              color: Colors.grey.shade50,
+                              color: theme.surfaceVariant,
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
@@ -677,7 +681,7 @@ class _ReportsModerationTabState extends State<_ReportsModerationTab> {
                                         errorBuilder: (_, __, ___) => Container(
                                           width: 80,
                                           height: 80,
-                                          color: Colors.grey.shade200,
+                                          color: theme.outlineVariant,
                                           child: const Icon(Icons.broken_image),
                                         ),
                                       ),
@@ -722,8 +726,8 @@ class _ReportsModerationTabState extends State<_ReportsModerationTab> {
                               const SizedBox(width: 8),
                               IconButton(
                                 tooltip: 'حذف البلاغ',
-                                icon: const Icon(Icons.delete_outline,
-                                    color: Colors.redAccent),
+                                icon: Icon(Icons.delete_outline,
+                                    color: theme.error),
                                 onPressed: () async {
                                   final confirm = await showDialog<bool>(
                                     context: context,
@@ -1028,6 +1032,7 @@ class _PlacesManagementTabState extends State<_PlacesManagementTab> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = FlutterFlowTheme.of(context);
     return Column(
       children: [
         // Search and Add Button
@@ -1101,11 +1106,11 @@ class _PlacesManagementTabState extends State<_PlacesManagementTab> {
                     child: ListTile(
                       leading: CircleAvatar(
                         backgroundColor: isVerified
-                            ? Colors.green.shade50
-                            : Colors.orange.shade50,
+                            ? theme.successContainer
+                            : theme.warningContainer,
                         child: Icon(
                           isVerified ? Icons.verified : Icons.help_outline,
-                          color: isVerified ? Colors.green : Colors.orange,
+                          color: isVerified ? theme.success : theme.warning,
                         ),
                       ),
                       title: Text(
@@ -1119,8 +1124,8 @@ class _PlacesManagementTabState extends State<_PlacesManagementTab> {
                           if (!isVerified)
                             IconButton(
                               tooltip: 'اعتماد المكان وتوثيقه',
-                              icon: const Icon(Icons.check_circle_outline,
-                                  color: Colors.green),
+                              icon: Icon(Icons.check_circle_outline,
+                                  color: theme.success),
                               onPressed: () {
                                 place.reference.update({
                                   'verification_status': 'verified',
@@ -1137,8 +1142,8 @@ class _PlacesManagementTabState extends State<_PlacesManagementTab> {
                             ),
                           IconButton(
                             tooltip: 'حذف المكان',
-                            icon: const Icon(Icons.delete_outline,
-                                color: Colors.redAccent),
+                            icon: Icon(Icons.delete_outline,
+                                color: theme.error),
                             onPressed: () async {
                               final confirm = await showDialog<bool>(
                                 context: context,
@@ -1184,6 +1189,7 @@ class _UsersManagementTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = FlutterFlowTheme.of(context);
     return StreamBuilder<QuerySnapshot>(
       stream: UsersRecord.collection
           .orderBy('created_time', descending: true)
@@ -1216,10 +1222,10 @@ class _UsersManagementTab extends StatelessWidget {
               child: ListTile(
                 leading: CircleAvatar(
                   backgroundColor:
-                      isAdmin ? Colors.amber.shade100 : Colors.blue.shade50,
+                      isAdmin ? theme.tertiaryLight : theme.infoContainer,
                   child: Icon(
                     isAdmin ? Icons.shield : Icons.person,
-                    color: isAdmin ? Colors.amber.shade900 : Colors.blue,
+                    color: isAdmin ? theme.tertiaryDark : theme.info,
                   ),
                 ),
                 title: Row(
@@ -1236,15 +1242,15 @@ class _UsersManagementTab extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 6, vertical: 1),
                         decoration: BoxDecoration(
-                          color: Colors.green.shade100,
+                          color: theme.successContainer,
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: const Text(
+                        child: Text(
                           'أنت',
                           style: TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.bold,
-                              color: Colors.green),
+                              color: theme.success),
                         ),
                       ),
                     ],
@@ -1277,21 +1283,21 @@ class _UsersManagementTab extends StatelessWidget {
                     }
                   },
                   itemBuilder: (context) => [
-                    const PopupMenuItem(
+                    PopupMenuItem(
                       value: 'admin',
                       child: Row(
                         children: [
-                          Icon(Icons.shield, color: Colors.amber, size: 20),
+                          Icon(Icons.shield, color: theme.tertiary, size: 20),
                           SizedBox(width: 8),
                           Text('ترقية إلى مدير نظام (Admin)'),
                         ],
                       ),
                     ),
-                    const PopupMenuItem(
+                    PopupMenuItem(
                       value: 'user',
                       child: Row(
                         children: [
-                          Icon(Icons.person, color: Colors.grey, size: 20),
+                          Icon(Icons.person, color: theme.secondaryText, size: 20),
                           SizedBox(width: 8),
                           Text('تعيين كمستخدم عادي (User)'),
                         ],
@@ -1300,13 +1306,13 @@ class _UsersManagementTab extends StatelessWidget {
                   ],
                   child: Chip(
                     backgroundColor:
-                        isAdmin ? Colors.amber.shade100 : Colors.grey.shade100,
+                        isAdmin ? theme.tertiaryLight : theme.surfaceVariant,
                     label: Text(
                       isAdmin ? 'مدير نظام 🛡️' : 'مستخدم عادي 👤',
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
-                        color: isAdmin ? Colors.amber.shade900 : Colors.black87,
+                        color: isAdmin ? theme.tertiaryDark : Colors.black87,
                       ),
                     ),
                   ),
