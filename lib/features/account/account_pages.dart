@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '/auth/firebase_auth/auth_util.dart';
+import '/flutter_flow/flutter_flow_theme.dart';
 import '/backend/schema/accessibility_reports_record.dart';
 import '/backend/schema/emergency_contacts_record.dart';
 import '/backend/schema/notifications_record.dart';
@@ -145,7 +146,7 @@ class _EmergencyContactsPageState extends State<EmergencyContactsPage> {
             style: const TextStyle(fontWeight: FontWeight.bold),
           ),
           backgroundColor:
-              result.success ? const Color(0xFFC62828) : Colors.orange.shade800,
+              result.success ? FlutterFlowTheme.of(context).error : FlutterFlowTheme.of(context).onWarningContainer,
           duration: const Duration(seconds: 5),
         ),
       );
@@ -306,28 +307,28 @@ class _EmergencyContactsPageState extends State<EmergencyContactsPage> {
                 children: [
                   // Prominent SOS Alert Card
                   Card(
-                    color: const Color(0xFFFFF2F2),
+                    color: FlutterFlowTheme.of(context).errorContainer,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                       side:
-                          const BorderSide(color: Colors.redAccent, width: 1.5),
+                          BorderSide(color: FlutterFlowTheme.of(context).error, width: 1.5),
                     ),
                     child: Padding(
                       padding: const EdgeInsets.all(16),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          const Row(
+                          Row(
                             children: [
                               Icon(Icons.warning_amber_rounded,
-                                  color: Colors.red, size: 28),
+                                  color: FlutterFlowTheme.of(context).error, size: 28),
                               SizedBox(width: 8),
                               Text(
                                 'نداء الاستغاثة السريع (SOS)',
                                 style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.red,
+                                  color: FlutterFlowTheme.of(context).error,
                                 ),
                               ),
                             ],
@@ -342,8 +343,8 @@ class _EmergencyContactsPageState extends State<EmergencyContactsPage> {
                           const SizedBox(height: 16),
                           FilledButton.icon(
                             style: FilledButton.styleFrom(
-                              backgroundColor: Colors.red.shade700,
-                              foregroundColor: Colors.white,
+                              backgroundColor: FlutterFlowTheme.of(context).error,
+                              foregroundColor: FlutterFlowTheme.of(context).onPrimary,
                               padding: const EdgeInsets.symmetric(vertical: 14),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
@@ -353,11 +354,11 @@ class _EmergencyContactsPageState extends State<EmergencyContactsPage> {
                                 ? null
                                 : _handleTriggerSOS,
                             icon: _triggeringSOS
-                                ? const SizedBox.square(
+                                ? SizedBox.square(
                                     dimension: 20,
                                     child: CircularProgressIndicator(
                                       strokeWidth: 2,
-                                      color: Colors.white,
+                                      color: FlutterFlowTheme.of(context).onPrimary,
                                     ),
                                   )
                                 : const Icon(Icons.emergency_share, size: 24),
@@ -401,8 +402,8 @@ class _EmergencyContactsPageState extends State<EmergencyContactsPage> {
                         padding: const EdgeInsets.all(24),
                         child: Column(
                           children: [
-                            const Icon(Icons.people_outline,
-                                size: 48, color: Colors.grey),
+                            Icon(Icons.people_outline,
+                                size: 48, color: FlutterFlowTheme.of(context).secondaryText),
                             const SizedBox(height: 12),
                             const Text(
                               'لا توجد جهات اتصال مضافة حتى الآن.\nأضف مرافِقك أو أحد أفراد عائلتك ليكون جهة اتصالك المعتمدة عند الطوارئ.',
@@ -431,8 +432,8 @@ class _EmergencyContactsPageState extends State<EmergencyContactsPage> {
                                     ? Icons.star_rounded
                                     : Icons.star_border_rounded,
                                 color: contact.isPrimary
-                                    ? Colors.amber
-                                    : Colors.grey,
+                                    ? FlutterFlowTheme.of(context).tertiary
+                                    : FlutterFlowTheme.of(context).secondaryText,
                                 size: 30,
                               ),
                               onPressed: contact.isPrimary
@@ -452,15 +453,15 @@ class _EmergencyContactsPageState extends State<EmergencyContactsPage> {
                                     padding: const EdgeInsets.symmetric(
                                         horizontal: 8, vertical: 2),
                                     decoration: BoxDecoration(
-                                      color: Colors.amber.shade100,
+                                      color: FlutterFlowTheme.of(context).tertiaryLight,
                                       borderRadius: BorderRadius.circular(12),
                                     ),
-                                    child: const Text(
+                                    child: Text(
                                       'الأساسي',
                                       style: TextStyle(
                                           fontSize: 11,
                                           fontWeight: FontWeight.bold,
-                                          color: Colors.brown),
+                                          color: FlutterFlowTheme.of(context).secondaryDark),
                                     ),
                                   ),
                                 ],
@@ -471,8 +472,8 @@ class _EmergencyContactsPageState extends State<EmergencyContactsPage> {
                             trailing: IconButton(
                               tooltip: 'حذف',
                               onPressed: () => contact.reference.delete(),
-                              icon: const Icon(Icons.delete_outline,
-                                  color: Colors.redAccent),
+                              icon: Icon(Icons.delete_outline,
+                                  color: FlutterFlowTheme.of(context).error),
                             ),
                           ),
                         )),
@@ -540,14 +541,14 @@ class _EditProfilePageState extends State<EditProfilePage> {
               // User Role Card
               Card(
                 color: currentUserIsAdmin
-                    ? const Color(0xFF1E293B)
-                    : const Color(0xFFF1F5F9),
+                    ? FlutterFlowTheme.of(context).primaryDark
+                    : FlutterFlowTheme.of(context).surfaceVariant,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                   side: BorderSide(
                     color: currentUserIsAdmin
-                        ? Colors.amber
-                        : Colors.blueGrey.shade200,
+                        ? FlutterFlowTheme.of(context).tertiary
+                        : FlutterFlowTheme.of(context).outlineVariant,
                   ),
                 ),
                 child: Padding(
@@ -562,8 +563,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                 ? Icons.admin_panel_settings
                                 : Icons.person_pin,
                             color: currentUserIsAdmin
-                                ? Colors.amber
-                                : Colors.blueGrey,
+                                ? FlutterFlowTheme.of(context).tertiary
+                                : FlutterFlowTheme.of(context).secondaryText,
                             size: 28,
                           ),
                           const SizedBox(width: 10),
@@ -578,8 +579,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                   fontWeight: FontWeight.bold,
                                   fontSize: 15,
                                   color: currentUserIsAdmin
-                                      ? Colors.white
-                                      : Colors.black87,
+                                      ? FlutterFlowTheme.of(context).onPrimary
+                                      : FlutterFlowTheme.of(context).primaryText,
                                 ),
                               ),
                               Text(
@@ -587,8 +588,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: currentUserIsAdmin
-                                      ? Colors.white70
-                                      : Colors.grey.shade600,
+                                      ? FlutterFlowTheme.of(context).onPrimary.withValues(alpha: 0.75)
+                                      : FlutterFlowTheme.of(context).secondaryText,
                                 ),
                               ),
                             ],
@@ -599,8 +600,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
                       if (currentUserIsAdmin) ...[
                         FilledButton.icon(
                           style: FilledButton.styleFrom(
-                            backgroundColor: Colors.amber,
-                            foregroundColor: Colors.black87,
+                            backgroundColor: FlutterFlowTheme.of(context).tertiary,
+                            foregroundColor: FlutterFlowTheme.of(context).primaryText,
                           ),
                           onPressed: () => context.pushNamed('AdminDashboard'),
                           icon: const Icon(Icons.dashboard_customize),
@@ -614,7 +615,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                           'يتم تعيين صلاحيات الإدارة من خلال لوحة تحكم Firebase Functions فقط.',
                           style: TextStyle(
                             fontSize: 12,
-                            color: Colors.white70,
+                            color: FlutterFlowTheme.of(context).onPrimary.withValues(alpha: 0.75),
                             fontStyle: FontStyle.italic,
                           ),
                           textAlign: TextAlign.center,
@@ -622,10 +623,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
                       ] else ...[
                         OutlinedButton.icon(
                           onPressed: null,
-                          icon: const Icon(Icons.shield_outlined, color: Colors.grey),
-                          label: const Text(
+                          icon: Icon(Icons.shield_outlined, color: FlutterFlowTheme.of(context).secondaryText),
+                          label: Text(
                             'صلاحيات الإدارة متاحة للحسابات المعتمدة فقط',
-                            style: TextStyle(color: Colors.grey),
+                            style: TextStyle(color: FlutterFlowTheme.of(context).secondaryText),
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -633,7 +634,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
           'للحصول على صلاحيات الإدارة، تواصل مع فريق ONEWAY عبر الإعدادات > الدعم.',
                           style: TextStyle(
                             fontSize: 12,
-                            color: Colors.grey.shade600,
+                            color: FlutterFlowTheme.of(context).secondaryText,
                             fontStyle: FontStyle.italic,
                           ),
                           textAlign: TextAlign.center,
@@ -867,8 +868,8 @@ class _InitialAdminSetupPageState extends State<InitialAdminSetupPage> {
                     Text(_seedMessage!,
                         style: TextStyle(
                             color: _seedMessage!.contains('تم')
-                                ? Colors.green
-                                : Colors.red),
+                                ? FlutterFlowTheme.of(context).success
+                                : FlutterFlowTheme.of(context).error),
                         textAlign: TextAlign.center),
                   ],
                 ]),

@@ -4,12 +4,52 @@ import 'package:flutter/foundation.dart';
 
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'auth/firebase_auth/firebase_user_provider.dart';
 import 'auth/firebase_auth/auth_util.dart';
 
 import 'backend/firebase/firebase_config.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import 'flutter_flow/flutter_flow_util.dart';
+
+/// Builds the single Material theme for the whole app from the brand
+/// palette in FlutterFlowTheme, so every screen (including admin and
+/// account pages that use plain Material widgets) shares one look.
+ThemeData _buildBrandedTheme(FlutterFlowTheme brand, Brightness brightness) {
+  return ThemeData(
+    brightness: brightness,
+    useMaterial3: false,
+    primaryColor: brand.primary,
+    scaffoldBackgroundColor: brand.background,
+    fontFamily: GoogleFonts.cairo().fontFamily,
+    colorScheme: ColorScheme.fromSeed(
+      seedColor: brand.primary,
+      brightness: brightness,
+      primary: brand.primary,
+      secondary: brand.secondary,
+      tertiary: brand.tertiary,
+      error: brand.error,
+    ),
+    appBarTheme: AppBarTheme(
+      backgroundColor: brand.primary,
+      foregroundColor: brand.onPrimary,
+      elevation: 0,
+      centerTitle: true,
+      titleTextStyle: GoogleFonts.cairo(
+        color: brand.onPrimary,
+        fontSize: 18,
+        fontWeight: FontWeight.w700,
+      ),
+    ),
+    floatingActionButtonTheme: FloatingActionButtonThemeData(
+      backgroundColor: brand.tertiary,
+      foregroundColor: brand.onPrimary,
+    ),
+    progressIndicatorTheme: ProgressIndicatorThemeData(
+      color: brand.primary,
+    ),
+  );
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -117,14 +157,8 @@ class MyAppState extends State<MyApp> {
         Locale('en', ''),
       ],
       locale: const Locale('ar', ''),
-      theme: ThemeData(
-        brightness: Brightness.light,
-        useMaterial3: false,
-      ),
-      darkTheme: ThemeData(
-        brightness: Brightness.dark,
-        useMaterial3: false,
-      ),
+      theme: _buildBrandedTheme(LightModeTheme(), Brightness.light),
+      darkTheme: _buildBrandedTheme(DarkModeTheme(), Brightness.dark),
       themeMode: _themeMode,
       routerConfig: _router,
       builder: (context, child) {

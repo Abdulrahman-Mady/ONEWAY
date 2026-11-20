@@ -24,6 +24,11 @@ if (flutterVersionName == null) {
     flutterVersionName = '1.0'
 }
 
+// Google Maps API key: read from the untracked android/local.properties file
+// (MAPS_API_KEY=...) or the MAPS_API_KEY environment variable. The key never
+// goes into version control; see android/local.properties.template.
+def mapsApiKey = localProperties.getProperty('MAPS_API_KEY') ?: System.getenv('MAPS_API_KEY') ?: 'MAPS_API_KEY_NOT_SET'
+
 def keystoreProperties = new Properties()
 def keystorePropertiesFile = rootProject.file('key.properties')
 if (keystorePropertiesFile.exists()) {
@@ -61,6 +66,7 @@ android {
         targetSdkVersion 36
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
+        manifestPlaceholders += [MAPS_API_KEY: mapsApiKey]
     }
 
    signingConfigs {

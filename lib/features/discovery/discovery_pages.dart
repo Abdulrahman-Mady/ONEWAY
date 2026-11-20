@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '/auth/firebase_auth/auth_util.dart';
+import '/flutter_flow/flutter_flow_theme.dart';
 import '/backend/schema/accessibility_reports_record.dart';
 import '/backend/schema/favorites_record.dart';
 import '/backend/schema/places_record.dart';
@@ -61,6 +62,7 @@ class _PlaceExplorerPageState extends State<PlaceExplorerPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = FlutterFlowTheme.of(context);
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
@@ -72,7 +74,7 @@ class _PlaceExplorerPageState extends State<PlaceExplorerPage> {
                 tooltip: 'لوحة تحكم الإدارة',
                 onPressed: () => context.pushNamed('AdminDashboard'),
                 icon:
-                    const Icon(Icons.admin_panel_settings, color: Colors.amber),
+                    Icon(Icons.admin_panel_settings, color: theme.tertiary),
               ),
             IconButton(
               tooltip: 'الإشعارات',
@@ -473,6 +475,7 @@ class _PlaceDetailPageState extends State<PlaceDetailPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = FlutterFlowTheme.of(context);
     final place = widget.place;
     final features = place.accessibilityFeatures;
     return Directionality(
@@ -490,7 +493,7 @@ class _PlaceDetailPageState extends State<PlaceDetailPage> {
                       child: CircularProgressIndicator(strokeWidth: 2))
                   : Icon(
                       _isFavorited ? Icons.favorite : Icons.favorite_border,
-                      color: _isFavorited ? Colors.red : null,
+                      color: _isFavorited ? theme.error : null,
                     ),
             ),
           ],
@@ -515,11 +518,11 @@ class _PlaceDetailPageState extends State<PlaceDetailPage> {
                 _StatusChip(status: place.verificationStatus),
                 if (place.category.isNotEmpty)
                   Chip(
-                    backgroundColor: Colors.teal.shade50,
+                    backgroundColor: theme.primaryLight,
                     label: Text(
                       place.category,
-                      style: const TextStyle(
-                          color: Colors.teal, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                          color: theme.primary, fontWeight: FontWeight.bold),
                     ),
                   ),
               ],
@@ -539,7 +542,7 @@ class _PlaceDetailPageState extends State<PlaceDetailPage> {
                 Expanded(
                   child: FilledButton.icon(
                     style: FilledButton.styleFrom(
-                      backgroundColor: Colors.indigo,
+                      backgroundColor: theme.info,
                       padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
                     onPressed: _openNavigation,
@@ -649,13 +652,13 @@ class _PlaceDetailPageState extends State<PlaceDetailPage> {
 
                 if (reviews.isEmpty) {
                   return Card(
-                    color: Colors.grey.shade50,
+                    color: theme.surfaceVariant,
                     child: Padding(
                       padding: const EdgeInsets.all(16),
                       child: Column(
                         children: [
-                          const Icon(Icons.star_outline,
-                              size: 36, color: Colors.amber),
+                          Icon(Icons.star_outline,
+                              size: 36, color: theme.tertiary),
                           const SizedBox(height: 8),
                           const Text(
                             'كن أول من يقيّم مستوى الإتاحة في هذا المكان!',
@@ -681,12 +684,12 @@ class _PlaceDetailPageState extends State<PlaceDetailPage> {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.amber.shade50,
+                        color: theme.tertiaryLight,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.star, color: Colors.amber, size: 28),
+                          Icon(Icons.star, color: theme.tertiary, size: 28),
                           const SizedBox(width: 8),
                           Text(
                             avgRating.toStringAsFixed(1),
@@ -696,7 +699,7 @@ class _PlaceDetailPageState extends State<PlaceDetailPage> {
                           const SizedBox(width: 8),
                           Text(
                             'من 5 (${reviews.length} تقييم)',
-                            style: TextStyle(color: Colors.grey.shade700),
+                            style: TextStyle(color: theme.secondaryText),
                           ),
                         ],
                       ),
@@ -727,7 +730,7 @@ class _PlaceDetailPageState extends State<PlaceDetailPage> {
                                           i < r.rating.round()
                                               ? Icons.star
                                               : Icons.star_border,
-                                          color: Colors.amber,
+                                          color: theme.tertiary,
                                           size: 16,
                                         ),
                                       ),
@@ -753,16 +756,16 @@ class _PlaceDetailPageState extends State<PlaceDetailPage> {
               onPressed: () => Navigator.of(context).push(MaterialPageRoute(
                 builder: (_) => SubmitReportPage(place: place),
               )),
-              icon: const Icon(Icons.report_problem_outlined,
-                  color: Colors.redAccent),
-              label: const Text('الإبلاغ عن معلومة غير دقيقة أو عائق جديد',
-                  style: TextStyle(color: Colors.redAccent)),
+              icon: Icon(Icons.report_problem_outlined,
+                  color: theme.error),
+              label: Text('الإبلاغ عن معلومة غير دقيقة أو عائق جديد',
+                  style: TextStyle(color: theme.error)),
             ),
             const SizedBox(height: 8),
-            const Text(
+            Text(
               'الاتجاهات في هذه المرحلة هي تنقّل عادي ولا تمثل مساراً مؤكداً للكرسي المتحرك.',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 12, color: Colors.grey),
+              style: TextStyle(fontSize: 12, color: theme.secondaryText),
             ),
           ],
         ),
@@ -1197,11 +1200,15 @@ class _EmptyStateState extends State<_EmptyState> {
             children: [
               Text(
                 widget.isDatabaseEmpty
-                    ? 'قاعدة بيانات الأماكن فارغة حالياً.\nيمكنك استيراد مجموعة الأماكن الأولية المعتمدة في القاهرة والجيزة للبدء فوراً.'
+                    ? (currentUserIsModerator
+                        ? 'قاعدة بيانات الأماكن فارغة حالياً.\nيمكنك استيراد مجموعة الأماكن الأولية المعتمدة في القاهرة والجيزة للبدء فوراً.'
+                        : 'الأماكن المجهزة هتظهر هنا أول ما تتضاف.\nجرب تاني بعد شوية.')
                     : widget.message,
                 textAlign: TextAlign.center,
               ),
-              if (widget.isDatabaseEmpty) ...[
+              // Only admins/moderators can seed: Firestore rules deny the
+              // write for regular users, so we never show them the button.
+              if (widget.isDatabaseEmpty && currentUserIsModerator) ...[
                 const SizedBox(height: 16),
                 FilledButton.icon(
                   onPressed: _loading ? null : _seed,
@@ -1215,8 +1222,8 @@ class _EmptyStateState extends State<_EmptyState> {
                   Text(_status!,
                       style: TextStyle(
                           color: _status!.contains('نجاح')
-                              ? Colors.green
-                              : Colors.red),
+                              ? FlutterFlowTheme.of(context).success
+                              : FlutterFlowTheme.of(context).error),
                       textAlign: TextAlign.center),
                 ],
               ],

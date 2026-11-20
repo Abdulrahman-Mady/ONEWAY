@@ -56,7 +56,7 @@ class _EmergencySOSWidgetState extends State<EmergencySOSWidget> {
             Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [theme.error, const Color(0xFFC62828)],
+                  colors: [theme.error, theme.error],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -102,8 +102,8 @@ class _EmergencySOSWidgetState extends State<EmergencySOSWidget> {
                                   style: const TextStyle(fontWeight: FontWeight.bold),
                                 ),
                                 backgroundColor: result.success
-                                    ? const Color(0xFF2E7D32)
-                                    : const Color(0xFFC62828),
+                                    ? theme.success
+                                    : theme.error,
                                 duration: const Duration(milliseconds: 5000),
                               ),
                             );
@@ -114,11 +114,11 @@ class _EmergencySOSWidgetState extends State<EmergencySOSWidget> {
                           width: 140,
                           height: 140,
                           decoration: BoxDecoration(
-                            color: const Color(0xFFE53935),
+                            color: theme.error,
                             boxShadow: [
                               BoxShadow(
                                 blurRadius: 32,
-                                color: const Color(0xFFE53935).withValues(alpha: 0.5),
+                                color: theme.error.withValues(alpha: 0.5),
                                 offset: const Offset(0, 12),
                                 spreadRadius: 0,
                               ),

@@ -58,9 +58,129 @@ async function grantInitialSuperAdmin(user) {
   return true;
 }
 
+// ============================================================================
+// Designated-admin allowlist
+// The owner designates admin emails in one Firestore document:
+//   admin_config/allowed_admin_emails  ->  { emails: ["a@x.com", ...] }
+// It is readable and writable only through the Admin SDK (Firestore rules
+// default-deny it for clients). New registrations on a listed email become
+// admin automatically; existing accounts can call claimDesignatedAdminRole.
+// ============================================================================
+
+const ALLOWLIST_DOC = "admin_config/allowed_admin_emails";
+
+async function readAllowedAdminEmails() {
+  const snap = await db.doc(ALLOWLIST_DOC).get();
+  const emails = snap.exists ? snap.data().emails : null;
+  if (!Array.isArray(emails)) return new Set();
+  return new Set(
+    emails.map((e) => String(e).trim().toLowerCase()).filter((e) => e.length > 0),
+  );
+}
+
+async function grantAllowlistedAdmin(user) {
+  const email = (user.email || "").trim().toLowerCase();
+  if (!email) return false;
+  const allowed = await readAllowedAdminEmails();
+  if (!allowed.has(email)) return false;
+
+  await admin.auth().setCustomUserClaims(user.uid, { superAdmin: false, role: "admin" });
+  await db.collection("users").doc(user.uid).set(
+    {
+      uid: user.uid,
+      email: user.email || null,
+      role: "admin",
+      updated_time: admin.firestore.FieldValue.serverTimestamp(),
+    },
+    { merge: true },
+  );
+  await writeAuditLog({
+    actorUid: user.uid,
+    action: "allowlisted_admin_granted",
+    targetUid: user.uid,
+    metadata: { source: "admin-email-allowlist" },
+  });
+  return true;
+}
+
 // Runs for future registrations. Existing owner accounts can call
 // bootstrapInitialSuperAdmin after the runtime configuration is deployed.
-exports.onUserCreated = functions.auth.user().onCreate(grantInitialSuperAdmin);
+exports.onUserCreated = functions.auth.user().onCreate(async (user) => {
+  const becameSuperAdmin = await grantInitialSuperAdmin(user);
+  if (!becameSuperAdmin) {
+    await grantAllowlistedAdmin(user);
+  }
+});
+
+// Any signed-in user may ask; the server grants only when their email is the
+// configured initial admin or is on the owner-designated allowlist. Existing
+// accounts use this after their email is added to the list.
+exports.claimDesignatedAdminRole = functions.https.onCall(async (_data, context) => {
+  if (!context.auth?.uid || !context.auth.token.email) {
+    throw new functions.https.HttpsError("unauthenticated", "Authentication is required.");
+  }
+  const user = await admin.auth().getUser(context.auth.uid);
+  if (await grantInitialSuperAdmin(user)) {
+    return { role: "superAdmin", refreshTokenRequired: true };
+  }
+  if (await grantAllowlistedAdmin(user)) {
+    return { role: "admin", refreshTokenRequired: true };
+  }
+  throw new functions.https.HttpsError(
+    "permission-denied",
+    "This email is not designated as an administrator.",
+  );
+});
+
+// Only the super admin manages the designated-admin email list.
+exports.addAllowedAdminEmail = functions.https.onCall(async (data, context) => {
+  if (!isSuperAdmin(context)) {
+    throw new functions.https.HttpsError("permission-denied", "Super administrator role required.");
+  }
+  const email = typeof data.email === "string" ? data.email.trim().toLowerCase() : "";
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+    throw new functions.https.HttpsError("invalid-argument", "A valid email address is required.");
+  }
+  await db.doc(ALLOWLIST_DOC).set(
+    { emails: admin.firestore.FieldValue.arrayUnion(email) },
+    { merge: true },
+  );
+  await writeAuditLog({
+    actorUid: context.auth.uid,
+    action: "admin_email_allowlisted",
+    targetUid: context.auth.uid,
+    metadata: { email },
+  });
+  return { email };
+});
+
+exports.removeAllowedAdminEmail = functions.https.onCall(async (data, context) => {
+  if (!isSuperAdmin(context)) {
+    throw new functions.https.HttpsError("permission-denied", "Super administrator role required.");
+  }
+  const email = typeof data.email === "string" ? data.email.trim().toLowerCase() : "";
+  if (!email) {
+    throw new functions.https.HttpsError("invalid-argument", "Email is required.");
+  }
+  await db.doc(ALLOWLIST_DOC).set(
+    { emails: admin.firestore.FieldValue.arrayRemove(email) },
+    { merge: true },
+  );
+  await writeAuditLog({
+    actorUid: context.auth.uid,
+    action: "admin_email_removed_from_allowlist",
+    targetUid: context.auth.uid,
+    metadata: { email },
+  });
+  return { email };
+});
+
+exports.listAllowedAdminEmails = functions.https.onCall(async (_data, context) => {
+  if (!isSuperAdmin(context)) {
+    throw new functions.https.HttpsError("permission-denied", "Super administrator role required.");
+  }
+  return { emails: Array.from(await readAllowedAdminEmails()).sort() };
+});
 
 // Allows only the configured account to bootstrap its own claim. No arbitrary
 // email or UID is accepted from the client.
@@ -329,6 +449,136 @@ exports.setUserRoleByAdmin = functions.https.onCall(async (data, context) => {
     metadata: { role },
   });
   return { uid, role, refreshTokenRequired: true };
+});
+
+// ============================================================================
+// AI Assistant
+// Real LLM-backed answers in Egyptian Arabic, grounded in the verified
+// places collection. Set the key with:
+//   firebase functions:config:set oneway.gemini_api_key="..."
+// If no key is configured the function returns { fallback: true } and the
+// app keeps using its local keyword engine, so nothing breaks.
+// ============================================================================
+
+const ASSISTANT_ACTIONS = new Set([
+  "ExploreMap",
+  "SubmitAccessibilityReport",
+  "FavoritesPage",
+  "SOS",
+]);
+
+function configuredGeminiKey() {
+  return (
+    process.env.GEMINI_API_KEY ||
+    functions.config().oneway?.gemini_api_key ||
+    ""
+  ).trim();
+}
+
+exports.assistantQuery = functions.https.onCall(async (data, context) => {
+  if (!context.auth?.uid) {
+    throw new functions.https.HttpsError("unauthenticated", "Authentication is required.");
+  }
+  const query = typeof data.query === "string" ? data.query.trim() : "";
+  if (!query || query.length > 500) {
+    throw new functions.https.HttpsError("invalid-argument", "Query must be 1-500 characters.");
+  }
+  const apiKey = configuredGeminiKey();
+  if (!apiKey) {
+    return { fallback: true };
+  }
+
+  // Ground the answer in the verified places only (server-side read).
+  const snap = await db
+    .collection("places")
+    .where("verification_status", "==", "verified")
+    .limit(60)
+    .get();
+  const places = snap.docs.map((d) => {
+    const p = d.data();
+    return {
+      id: d.id,
+      name: p.name,
+      category: p.category,
+      city: p.city,
+      governorate: p.governorate,
+      rating: p.rating,
+      features: p.accessibility_features || {},
+    };
+  });
+
+  const systemPrompt = [
+    "أنت مساعد تطبيق ONEWAY لذوي الإعاقة الحركية في مصر. بتتكلم بالمصري العامي، باحترام ووضوح وبجمل قصيرة.",
+    "ساعد المستخدم يلاقي أماكن مجهزة للكراسي المتحركة من قائمة الأماكن المعتمدة المرفقة فقط - متخترعش أماكن من عندك.",
+    "لو الطلب طوارئ أو استغاثة رد بـ action=SOS. لو عايز الخريطة action=ExploreMap، بلاغ عن عائق action=SubmitAccessibilityReport، المفضلة action=FavoritesPage.",
+    "رد JSON فقط بالشكل: {\"reply\": \"...\", \"action\": null|\"ExploreMap\"|\"SubmitAccessibilityReport\"|\"FavoritesPage\"|\"SOS\", \"placeIds\": [...]}",
+    "placeIds تحط فيها ids الأماكن المناسبة من القائمة (حد أقصى 3) أو تسيبها فاضية.",
+  ].join("\n");
+
+  const resp = await fetch(
+    "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=" +
+      encodeURIComponent(apiKey),
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: systemPrompt }] },
+        contents: [
+          {
+            role: "user",
+            parts: [
+              {
+                text:
+                  "الأماكن المعتمدة المتاحة:\n" +
+                  JSON.stringify(places) +
+                  "\n\nطلب المستخدم: " +
+                  query,
+              },
+            ],
+          },
+        ],
+        generationConfig: {
+          temperature: 0.4,
+          maxOutputTokens: 600,
+          responseMimeType: "application/json",
+        },
+      }),
+    },
+  );
+
+  if (!resp.ok) {
+    await writeAuditLog({
+      actorUid: context.auth.uid,
+      action: "assistant_llm_error",
+      targetUid: context.auth.uid,
+      metadata: { status: resp.status },
+    });
+    return { fallback: true };
+  }
+
+  let parsed = null;
+  try {
+    const payload = await resp.json();
+    const text = payload.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    parsed = JSON.parse(text);
+  } catch (_e) {
+    return { fallback: true };
+  }
+
+  const action = ASSISTANT_ACTIONS.has(parsed.action) ? parsed.action : null;
+  const knownIds = new Set(places.map((p) => p.id));
+  const placeIds = Array.isArray(parsed.placeIds)
+    ? parsed.placeIds.filter((id) => knownIds.has(id)).slice(0, 3)
+    : [];
+
+  return {
+    fallback: false,
+    reply: typeof parsed.reply === "string" && parsed.reply.trim()
+      ? parsed.reply.trim()
+      : "معلش، مش قادر أرد دلوقتي. جرب تاني.",
+    action,
+    placeIds,
+  };
 });
 
 exports.onUserDeleted = functions.auth.user().onDelete(async (user) => {

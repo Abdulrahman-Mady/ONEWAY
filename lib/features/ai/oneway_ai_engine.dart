@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 
 import '/backend/schema/places_record.dart';
@@ -74,7 +75,13 @@ class OnewayAIEngine {
       }
     }
 
-    // 2. Check for App Navigation intent
+    // 2. Try the server-side LLM assistant (Gemini via Cloud Function).
+    // Returns null when the function is not deployed, has no API key, or the
+    // device is offline - the local keyword engine below takes over then.
+    final remote = await _tryRemoteAssistant(rawQuery);
+    if (remote != null) return remote;
+
+    // 3. Check for App Navigation intent
     if (query.contains('خريطه') || query.contains('الخريطه')) {
       return AIResponse(
         intent: AIIntentType.navigation,
@@ -97,8 +104,62 @@ class OnewayAIEngine {
       );
     }
 
-    // 3. Search and Grounded Retrieval for Places
+    // 4. Search and Grounded Retrieval for Places
     return await _searchPlacesWithAI(rawQuery, query);
+  }
+
+  /// Calls the assistantQuery Cloud Function and maps its JSON answer onto an
+  /// [AIResponse]. A null return means the local keyword engine should run.
+  static Future<AIResponse?> _tryRemoteAssistant(String rawQuery) async {
+    try {
+      final callable = FirebaseFunctions.instance.httpsCallable(
+        'assistantQuery',
+        options: HttpsCallableOptions(timeout: const Duration(seconds: 12)),
+      );
+      final res = await callable.call({'query': rawQuery});
+      final data = Map<String, dynamic>.from(res.data as Map);
+      if (data['fallback'] == true) return null;
+
+      final action = data['action'] as String?;
+
+      // The model detected an emergency phrasing the local keywords missed.
+      if (action == 'SOS') {
+        final emergency = await EmergencyService.triggerSOS();
+        return AIResponse(
+          intent: AIIntentType.emergency,
+          replyText: emergency.success
+              ? '🚨 تم تفعيل نداء الاستغاثة فوراً!\n'
+                  'تم تجهيز موقعك الحالي وإرساله إلى المرافق: ${emergency.contactName} (${emergency.phone}).\n'
+                  'رابط الخريطة المرفق:\n${emergency.mapsUrl}'
+              : '⚠️ تنبيه: ${emergency.message}',
+          emergencyResult: emergency,
+        );
+      }
+
+      final placeIds =
+          (data['placeIds'] as List?)?.whereType<String>().toList() ??
+              const <String>[];
+      final places = <PlacesRecord>[];
+      for (final id in placeIds) {
+        final doc = await PlacesRecord.collection.doc(id).get();
+        if (doc.exists) places.add(PlacesRecord.fromSnapshot(doc));
+      }
+
+      return AIResponse(
+        intent: places.isNotEmpty
+            ? AIIntentType.placeSearch
+            : (action != null
+                ? AIIntentType.navigation
+                : AIIntentType.generalInfo),
+        replyText: (data['reply'] as String?)?.trim().isNotEmpty == true
+            ? (data['reply'] as String).trim()
+            : 'تمام، جاري التنفيذ...',
+        places: places,
+        navigationRoute: action,
+      );
+    } catch (_) {
+      return null;
+    }
   }
 
   static Future<AIResponse> _searchPlacesWithAI(
