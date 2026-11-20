@@ -31,6 +31,9 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
 
   final scaffoldKey = GlobalKey<ScaffoldState>();
 
+  /// Soft verification reminder: shown when the account is not fully verified.
+  bool _showVerificationBanner = false;
+
   @override
   void initState() {
     super.initState();
@@ -55,6 +58,20 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
       ),
     );
     _animationController.forward();
+    _checkVerificationStatus();
+  }
+
+  Future<void> _checkVerificationStatus() async {
+    try {
+      final status = await VerificationService.instance.getVerificationStatus();
+      if (mounted) {
+        setState(() {
+          _showVerificationBanner = status != VerificationStatus.fullyVerified;
+        });
+      }
+    } catch (_) {
+      // Never block the home screen on a verification lookup failure.
+    }
   }
 
   @override
@@ -87,6 +104,11 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
                 SliverToBoxAdapter(
                   child: _buildHeroHeader(theme),
                 ),
+                // Soft verification reminder (dismissible)
+                if (_showVerificationBanner)
+                  SliverToBoxAdapter(
+                    child: _buildVerificationBanner(theme),
+                  ),
                 // Content
                 SliverPadding(
                   padding: const EdgeInsets.fromLTRB(24, 24, 24, 100),
@@ -107,6 +129,65 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
           ),
         ),
         bottomNavigationBar: _buildBottomNav(theme),
+      ),
+    );
+  }
+
+  Widget _buildVerificationBanner(FlutterFlowTheme theme) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+      child: Material(
+        color: theme.tertiaryLight,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () => context.pushNamed(VerifyAccountWidget.routeName),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.verified_user_outlined,
+                  color: theme.tertiaryDark,
+                  size: 24,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'وثّق حسابك بالإيميل أو التليفون عشان تستفيد بكل المزايا',
+                    style: theme.bodyMedium.copyWith(
+                      color: theme.primaryText,
+                      fontWeight: FontWeight.w600,
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Icon(
+                  Icons.arrow_back_ios_rounded,
+                  color: theme.tertiaryDark,
+                  size: 16,
+                ),
+                const SizedBox(width: 4),
+                GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _showVerificationBanner = false;
+                    });
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.all(4),
+                    child: Icon(
+                      Icons.close_rounded,
+                      color: theme.secondaryText,
+                      size: 20,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

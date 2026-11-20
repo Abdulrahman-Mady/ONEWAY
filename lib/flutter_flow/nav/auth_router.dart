@@ -114,20 +114,12 @@ class AuthRouter {
         );
       }
 
-      // Check verification status
-      final verificationStatus = await _verificationService.getVerificationStatus();
-      if (verificationStatus != VerificationStatus.fullyVerified) {
-        return AuthRoute(
-          route: '/verify-account',
-          reason: 'Account not fully verified',
-          extra: {'verificationStatus': verificationStatus},
-        );
-      }
-
-      // Fully verified customer - go to home
+      // Verification is no longer a hard gate: users browse freely and get a
+      // soft reminder banner on the home screen instead. /verify-account
+      // stays reachable for anyone who wants to complete verification.
       return AuthRoute(
         route: '/home',
-        reason: 'Verified customer',
+        reason: 'Customer signed in (verification is a soft reminder)',
       );
     }
 
@@ -177,19 +169,8 @@ class AuthRouter {
       return;
     }
 
-    // Profile complete, check verification
-    final verificationStatus = await _verificationService.getVerificationStatus();
-    if (verificationStatus != VerificationStatus.fullyVerified) {
-      final route = AuthRoute(
-        route: '/verify-account',
-        reason: 'Social login - needs verification',
-        extra: {'verificationStatus': verificationStatus},
-      );
-      _navigate(context, route);
-      return;
-    }
-
-    // Fully set up user
+    // Profile complete. Verification is a soft reminder on the home screen,
+    // not a gate - social sign-in users go straight to their normal route.
     final route = await determineRoute();
     _navigate(context, route);
   }
