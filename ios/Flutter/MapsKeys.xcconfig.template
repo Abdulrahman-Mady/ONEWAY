@@ -1,0 +1,4 @@
+// Copy this file to MapsKeys.xcconfig (same folder) and paste your real
+// Google Maps API key. MapsKeys.xcconfig is gitignored and must never be
+// committed.
+MAPS_API_KEY = your_google_maps_api_key_here

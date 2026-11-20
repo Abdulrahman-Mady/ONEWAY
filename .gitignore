@@ -17,6 +17,7 @@ android/key.properties
 *.jks
 
 # iOS
+ios/Flutter/MapsKeys.xcconfig
 ios/Flutter/ephemeral/
 ios/Flutter/Flutter.framework
 ios/Flutter/Flutter.podspec
