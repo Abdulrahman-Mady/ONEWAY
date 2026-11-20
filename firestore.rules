@@ -1,0 +1,228 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function getUserRole() {
+      return getUserData().role;
+    }
+
+    function isAdmin() {
+      return getUserRole() == 'admin' || getUserRole() == 'superAdmin';
+    }
+
+    function isModerator() {
+      return isAdmin() || getUserRole() == 'moderator';
+    }
+
+    function isBusinessOwner() {
+      return getUserRole() == 'businessOwner';
+    }
+
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    function isBusinessOwnerOf(businessId) {
+      return exists(/databases/$(database)/documents/businesses/$(businessId)) &&
+             get(/databases/$(database)/documents/businesses/$(businessId)).data.ownerId == request.auth.uid;
+    }
+
+    // Users collection
+    match /users/{userId} {
+      // Users can read their own profile
+      allow read: if isSignedIn() && (isOwner(userId) || isAdmin() || isModerator());
+
+      // Users can create their own profile on signup
+      allow create: if isSignedIn() && isOwner(userId) &&
+        request.resource.data.keys().hasOnly([
+          'email', 'display_name', 'photo_url', 'uid', 'phone_number',
+          'role', 'created_time', 'updated_time', 'email_verified', 'phone_verified',
+          'gender', 'birth_date', 'address', 'business_application_id', 'business_application_status'
+        ]) &&
+        request.resource.data.role == 'user' &&
+        request.resource.data.uid == request.auth.uid;
+
+      // Users can update their own profile (except role)
+      allow update: if isSignedIn() && isOwner(userId) &&
+        !request.resource.data.keys().hasAny(['role', 'uid', 'created_time']) &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'display_name', 'phone_number', 'photo_url', 'email', 'updated_time',
+          'email_verified', 'phone_verified', 'gender', 'birth_date', 'address'
+        ]);
+
+      // Only admins can delete users
+      allow delete: if isAdmin();
+    }
+
+    // Places collection - public read for verified places
+    match /places/{placeId} {
+      allow read: if isSignedIn() && (
+        resource.data.verification_status == 'verified' ||
+        isAdmin() || isModerator() ||
+        (isBusinessOwner() && isBusinessOwnerOf(placeId))
+      );
+
+      // Only admins/moderators can create places
+      allow create: if isAdmin() || isModerator();
+
+      // Only admins/moderators or business owner of the place can update
+      allow update: if isAdmin() || isModerator() ||
+        (isBusinessOwner() && isBusinessOwnerOf(placeId));
+
+      // Only admins can delete
+      allow delete: if isAdmin();
+    }
+
+    // Businesses collection
+    match /businesses/{businessId} {
+      // Business owner can read their own business
+      // Admins/moderators can read all
+      allow read: if isSignedIn() && (
+        isAdmin() || isModerator() ||
+        (isBusinessOwner() && isBusinessOwnerOf(businessId))
+      );
+
+      // Only business owners can create business applications (status: pending)
+      allow create: if isSignedIn() &&
+        request.resource.data.ownerId == request.auth.uid &&
+        request.resource.data.status == 'pending' &&
+        request.resource.data.subscription_tier == 'free';
+
+      // Business owner can update their business (except status)
+      // Admins/moderators can update status
+      allow update: if isSignedIn() && (
+        (isBusinessOwner() && isBusinessOwnerOf(businessId) &&
+         !request.resource.data.keys().hasAny(['status', 'ownerId', 'created_at'])) ||
+        (isAdmin() || isModerator())
+      );
+
+      // Only admins can delete
+      allow delete: if isAdmin();
+    }
+
+    // Accessibility Reports
+    match /accessibilityReports/{reportId} {
+      // Users can read their own reports, admins/moderators read all
+      allow read: if isSignedIn() && (
+        isAdmin() || isModerator() ||
+        resource.data.createdBy == request.auth.uid
+      );
+
+      // Users can create reports
+      allow create: if isSignedIn() &&
+        request.resource.data.createdBy == request.auth.uid &&
+        request.resource.data.status == 'new';
+
+      // Only admins/moderators can update status
+      allow update: if isSignedIn() && (
+        (isAdmin() || isModerator() &&
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'admin_notes', 'updated_at'])) ||
+        (resource.data.createdBy == request.auth.uid &&
+         request.resource.data.status == 'new' &&
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['description', 'photo_urls']))
+      );
+
+      // Only admins can delete
+      allow delete: if isAdmin();
+    }
+
+    // Reviews
+    match /reviews/{reviewId} {
+      // Public read for published reviews
+      allow read: if isSignedIn() && (
+        resource.data.status == 'published' ||
+        resource.data.createdBy == request.auth.uid ||
+        isAdmin() || isModerator()
+      );
+
+      // Users can create reviews
+      allow create: if isSignedIn() &&
+        request.resource.data.createdBy == request.auth.uid &&
+        request.resource.data.status == 'published' &&
+        request.resource.data.rating >= 1.0 && request.resource.data.rating <= 5.0;
+
+      // Users can update their own reviews (before moderation)
+      // Admins/moderators can update status
+      allow update: if isSignedIn() && (
+        (resource.data.createdBy == request.auth.uid &&
+         resource.data.status == 'published' &&
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['rating', 'comment', 'updated_at'])) ||
+        (isAdmin() || isModerator())
+      );
+
+      // Only admins can delete
+      allow delete: if isAdmin();
+    }
+
+    // Favorites
+    match /favorites/{favoriteId} {
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    // Notifications
+    match /notifications/{notificationId} {
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow update: if isSignedIn() && resource.data.userId == request.auth.uid &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['is_read']);
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    // Emergency Contacts
+    match /emergencyContacts/{contactId} {
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    // Audit Logs - Admin only
+    match /auditLogs/{logId} {
+      allow read: if isAdmin();
+      allow write: if false; // Only backend can write
+    }
+
+    // Admin Notifications - Admin only
+    match /admin_notifications/{notificationId} {
+      allow read: if isAdmin() || isModerator();
+      allow write: if false; // Only backend can write
+    }
+
+    // Field Assessment Requests
+    match /field_assessment_requests/{requestId} {
+      allow read: if isSignedIn() && (
+        isAdmin() || isModerator() ||
+        resource.data.owner_id == request.auth.uid
+      );
+      allow create: if isSignedIn() &&
+        request.resource.data.owner_id == request.auth.uid &&
+        request.resource.data.status == 'pending';
+      allow update: if isAdmin() || isModerator();
+    }
+
+    // Business Applications (pending applications)
+    match /business_applications/{appId} {
+      allow read: if isSignedIn() && (
+        isAdmin() || isModerator() ||
+        resource.data.owner_id == request.auth.uid
+      );
+      // Creation handled via businesses collection with status: pending
+      allow write: if false;
+    }
+
+    // Default deny for any other collections
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
