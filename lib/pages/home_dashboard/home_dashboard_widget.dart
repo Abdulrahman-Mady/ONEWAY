@@ -363,29 +363,27 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
   Widget _buildQuickActions(FlutterFlowTheme theme) {
     final items = <({
       String label,
-      Widget icon,
+      String iconKey,
       void Function() onTap,
     })>[
       (
         label: 'الخريطة',
-        icon: _MapPinIcon(size: 44),
+        iconKey: 'map',
         onTap: () => context.pushNamed(ExploreMapWidget.routeName),
       ),
       (
         label: 'بلّغ عن عائق',
-        icon: const Icon(Icons.mail_rounded,
-            color: Color(0xFF2E7FD9), size: 42),
+        iconKey: 'report',
         onTap: () => context.pushNamed(SubmitAccessibilityReportWidget.routeName),
       ),
       (
         label: 'المفضلة',
-        icon: const Icon(Icons.favorite_border_rounded,
-            color: Color(0xFF2E7FD9), size: 42),
+        iconKey: 'favorites',
         onTap: () => context.pushNamed(FavoritesPageWidget.routeName),
       ),
       (
         label: 'الطوارئ',
-        icon: Icon(Icons.warning_rounded, color: theme.error, size: 44),
+        iconKey: 'emergency',
         onTap: () => context.goNamed(EmergencySOSWidget.routeName),
       ),
     ];
@@ -421,7 +419,7 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    item.icon,
+                    _quickActionIcon(item.iconKey, theme),
                     const SizedBox(height: 10),
                     Text(
                       item.label,
@@ -690,6 +688,24 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
         },
       ),
     );
+  }
+}
+
+// Quick-grid icons as direct Icon literals so the font tree-shaker keeps them.
+Widget _quickActionIcon(String key, FlutterFlowTheme theme) {
+  switch (key) {
+    case 'map':
+      return const _MapPinIcon(size: 44);
+    case 'report':
+      return const Icon(Icons.mail_rounded,
+          color: Color(0xFF2E7FD9), size: 42);
+    case 'favorites':
+      return const Icon(Icons.favorite_border_rounded,
+          color: Color(0xFF2E7FD9), size: 42);
+    case 'emergency':
+    default:
+      return const Icon(Icons.warning_rounded,
+          color: Color(0xFFE5484D), size: 44);
   }
 }
 
