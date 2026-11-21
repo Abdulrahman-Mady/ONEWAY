@@ -148,7 +148,6 @@ class _AuthenticationWidgetState extends State<AuthenticationWidget>
       child: ClipRRect(
         borderRadius: const BorderRadius.vertical(bottom: Radius.circular(36)),
         child: Stack(
-          fit: StackFit.expand,
           alignment: Alignment.topCenter,
           children: [
             // Cairo skyline art, anchored low so it frames the header.
