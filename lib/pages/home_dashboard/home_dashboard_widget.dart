@@ -247,32 +247,28 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
         child: Stack(
           alignment: Alignment.topCenter,
           children: [
-            // Cairo skyline band along the header's bottom edge.
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
+            // Illustrated Cairo skyline band (mockup art) filling the header.
+            Positioned.fill(
               child: Image.asset(
-                'assets/images/hero_cairo_city.jpg',
-                height: 110,
+                'assets/images/home_skyline_band.jpg',
                 fit: BoxFit.cover,
-                alignment: const Alignment(0, 0.5),
+                alignment: Alignment.bottomCenter,
               ),
             ),
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
-              height: 110,
+            // Navy veil for legibility: strong on top, soft over the art.
+            Positioned.fill(
               child: DecoratedBox(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      theme.navy.withValues(alpha: 0.75),
-                      theme.navy.withValues(alpha: 0.15),
+                      theme.navy.withValues(alpha: 0.88),
+                      theme.navy.withValues(alpha: 0.25),
+                      theme.navy.withValues(alpha: 0.10),
+                      theme.navy.withValues(alpha: 0.35),
                     ],
+                    stops: const [0.0, 0.35, 0.7, 1.0],
                   ),
                 ),
               ),
@@ -280,7 +276,7 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
             SafeArea(
               bottom: false,
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(24, 16, 24, 72),
+                padding: const EdgeInsets.fromLTRB(24, 16, 24, 20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -329,22 +325,30 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
                   ),
                 ],
               ),
-              const SizedBox(height: 24),
-              // Search Bar + Voice Assistant
-              Row(
-                children: [
-                  Expanded(
-                    child: _SearchBar(
-                      onTap: () => context.pushNamed(SearchFiltersWidget.routeName),
+              const SizedBox(height: 10),
+              // Mockup tagline over the skyline art.
+              Text(
+                'اعرف المكان قبل ما تروح',
+                style: theme.titleLarge.copyWith(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                  height: 1.4,
+                  shadows: [
+                    Shadow(
+                      color: theme.navyDark.withValues(alpha: 0.6),
+                      blurRadius: 10,
+                      offset: const Offset(0, 2),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  _HeroActionButton(
-                    icon: Icons.mic_rounded,
-                    backgroundColor: theme.gold,
-                    onTap: () => context.goNamed(VoiceAssistantInterfaceWidget.routeName),
-                  ),
-                ],
+                  ],
+                ),
+              ),
+              const SizedBox(height: 96),
+              // Mockup search pill: teal arrow, hint text, teal mic circle.
+              _SearchBar(
+                onTap: () => context.pushNamed(SearchFiltersWidget.routeName),
+                onMicTap: () =>
+                    context.goNamed(VoiceAssistantInterfaceWidget.routeName),
               ),
             ],
           ),
@@ -355,37 +359,34 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
       );
   }
 
-  // Mockup quick-action grid: 2x2 white cards (map, SOS, favorites, report).
+  // Mockup quick-action grid: 2x2 white cards with colorful custom icons.
   Widget _buildQuickActions(FlutterFlowTheme theme) {
     final items = <({
       String label,
-      IconData icon,
-      Color color,
+      Widget icon,
       void Function() onTap,
     })>[
       (
         label: 'الخريطة',
-        icon: Icons.map_rounded,
-        color: theme.primary,
+        icon: _MapPinIcon(size: 44),
         onTap: () => context.pushNamed(ExploreMapWidget.routeName),
       ),
       (
-        label: 'الطوارئ',
-        icon: Icons.emergency_rounded,
-        color: theme.error,
-        onTap: () => context.goNamed(EmergencySOSWidget.routeName),
+        label: 'بلّغ عن عائق',
+        icon: const Icon(Icons.mark_email_unread_rounded,
+            color: Color(0xFF2E7FD9), size: 42),
+        onTap: () => context.pushNamed(SubmitAccessibilityReportWidget.routeName),
       ),
       (
         label: 'المفضلة',
-        icon: Icons.favorite_rounded,
-        color: theme.tertiary,
+        icon: const Icon(Icons.favorite_outline_rounded,
+            color: Color(0xFF2E7FD9), size: 42),
         onTap: () => context.pushNamed(FavoritesPageWidget.routeName),
       ),
       (
-        label: 'بلّغ عن عائق',
-        icon: Icons.report_problem_rounded,
-        color: theme.navy,
-        onTap: () => context.pushNamed(SubmitAccessibilityReportWidget.routeName),
+        label: 'الطوارئ',
+        icon: Icon(Icons.warning_rounded, color: theme.error, size: 44),
+        onTap: () => context.goNamed(EmergencySOSWidget.routeName),
       ),
     ];
     return GridView.count(
@@ -420,16 +421,8 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Container(
-                      width: 46,
-                      height: 46,
-                      decoration: BoxDecoration(
-                        color: item.color.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: Icon(item.icon, color: item.color, size: 24),
-                    ),
-                    const SizedBox(height: 8),
+                    item.icon,
+                    const SizedBox(height: 10),
                     Text(
                       item.label,
                       style: theme.titleSmall.copyWith(
@@ -676,22 +669,55 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
   Widget _buildBottomNav(FlutterFlowTheme theme) {
     return BottomNavWidget(
       child: () => BottomNavChildWidget(
-        currentIndex: 0,
+        currentIndex: 2,
         onTap: (index) {
           switch (index) {
             case 0:
-              break; // Already on home
+              context.pushNamed(UserProfileWidget.routeName);
+              break;
             case 1:
-              context.pushNamed(ExploreMapWidget.routeName);
+              context.pushNamed(NotificationsPageWidget.routeName);
               break;
             case 2:
-              context.pushNamed(SubmitAccessibilityReportWidget.routeName);
-              break;
+              break; // Already on home
             case 3:
-              context.pushNamed(UserProfileWidget.routeName);
+              context.pushNamed(FavoritesPageWidget.routeName);
+              break;
+            case 4:
+              context.pushNamed(SubmitAccessibilityReportWidget.routeName);
               break;
           }
         },
+      ),
+    );
+  }
+}
+
+// Mockup-style colorful map icon: green map with a red 3D-style pin.
+class _MapPinIcon extends StatelessWidget {
+  const _MapPinIcon({this.size = 44});
+
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: size,
+      height: size,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Positioned(
+            bottom: 0,
+            child: Icon(Icons.map_rounded,
+                color: const Color(0xFF4CAF50), size: size * 0.95),
+          ),
+          Positioned(
+            top: 0,
+            child: Icon(Icons.location_on_rounded,
+                color: const Color(0xFFE5484D), size: size * 0.7),
+          ),
+        ],
       ),
     );
   }
@@ -737,9 +763,10 @@ class _HeroActionButton extends StatelessWidget {
 }
 
 class _SearchBar extends StatelessWidget {
-  const _SearchBar({required this.onTap});
+  const _SearchBar({required this.onTap, required this.onMicTap});
 
   final VoidCallback onTap;
+  final VoidCallback onMicTap;
 
   @override
   Widget build(BuildContext context) {
@@ -748,36 +775,65 @@ class _SearchBar extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(theme.designToken.radius.xl),
+        borderRadius: BorderRadius.circular(30),
         splashColor: theme.primary.withValues(alpha: 0.1),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
           decoration: BoxDecoration(
             color: theme.onPrimary,
-            borderRadius: BorderRadius.circular(theme.designToken.radius.xl),
+            borderRadius: BorderRadius.circular(30),
             boxShadow: [
               BoxShadow(
-                blurRadius: 8,
-                color: theme.shadow.withValues(alpha: 0.1),
-                offset: const Offset(0, 2),
+                blurRadius: 16,
+                color: theme.navyDark.withValues(alpha: 0.25),
+                offset: const Offset(0, 6),
                 spreadRadius: 0,
               ),
             ],
           ),
           child: Row(
             children: [
-              Icon(
-                Icons.search_rounded,
-                color: theme.secondaryText,
-                size: 24,
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Icon(
+                  Icons.arrow_back_rounded,
+                  color: theme.primary,
+                  size: 22,
+                ),
               ),
-              const SizedBox(width: 12),
-              Text(
-                'ابحث عن مكان...',
-                style: theme.bodyMedium.copyWith(
-                  fontSize: 15,
-                  color: theme.onSurface,
-                  height: 1.5,
+              Expanded(
+                child: Text(
+                  'ابحث عن مكان...',
+                  textAlign: TextAlign.center,
+                  style: theme.bodyMedium.copyWith(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: theme.secondaryText,
+                    height: 1.5,
+                  ),
+                ),
+              ),
+              GestureDetector(
+                onTap: onMicTap,
+                child: Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: theme.primary,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: theme.primary.withValues(alpha: 0.4),
+                        blurRadius: 10,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.mic_rounded,
+                    color: Colors.white,
+                    size: 22,
+                  ),
                 ),
               ),
             ],
