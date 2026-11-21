@@ -50,11 +50,21 @@ class _EditProfileWidgetState extends State<EditProfileWidget> {
     'أخرى',
   ];
 
+  bool _prefilled = false;
+
   @override
   void initState() {
     super.initState();
-    final data =
-        currentUserDocument?.snapshotData ?? const <String, dynamic>{};
+    _prefill(currentUserDocument?.snapshotData);
+  }
+
+  /// Fills the form from the user document once. On a cold load (deep
+  /// link) the document stream has not emitted yet in initState, so build
+  /// calls this again when the document arrives - unless the user already
+  /// started typing (then _prefilled is true).
+  void _prefill(Map<String, dynamic>? data) {
+    if (_prefilled || data == null) return;
+    _prefilled = true;
     _nameController.text = (data['display_name'] as String?) ?? '';
     _phoneController.text = (data['phone_number'] as String?) ?? '';
     _addressController.text = (data['address'] as String?) ?? '';
@@ -145,7 +155,11 @@ class _EditProfileWidgetState extends State<EditProfileWidget> {
   Widget build(BuildContext context) {
     final theme = FlutterFlowTheme.of(context);
 
-    return GestureDetector(
+    return AuthUserStreamWidget(
+      builder: (context) {
+        // Re-run prefill when the user document arrives after a cold load.
+        if (!_prefilled) _prefill(currentUserDocument?.snapshotData);
+        return GestureDetector(
       onTap: () {
         FocusScope.of(context).unfocus();
         FocusManager.instance.primaryFocus?.unfocus();
@@ -263,6 +277,8 @@ class _EditProfileWidgetState extends State<EditProfileWidget> {
           ),
         ),
       ),
+        );
+      },
     );
   }
 

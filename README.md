@@ -68,3 +68,24 @@ firebase deploy --only functions
   كلها في `.gitignore` ومينفعش تترفع على الريبو.
 - قبل النشر على Play Store: ظبط توقيع release حقيقي في `android/key.properties`
   (الحالي بيستخدم مفاتيح debug).
+
+## ملاحظات تشغيل حالية (نوفمبر 2026)
+
+### تسجيل الدخول بالبريد الإلكتروني و OTP
+- إنشاء الحساب بالبريد + إكمال الملف الشخصي شغال من غير خطوة OTP.
+- شاشة OTP (`/register/step2`) موجودة للمسار القديم، لكن مفيش باك إند بيبعت
+  الإيميل فعلياً (الكود بيتخزن في `verificationCodes` وبس). إرسال الإيميل
+  محتاج Cloud Functions على خطة Blaze - مؤجل لحد ما تتفعل.
+- التسجيل بالهاتف شغال عادي عبر رسائل Firebase SMS.
+
+### لوحة `/admin/setup`
+- الصفحة بتستدعي Cloud Function اسمها `bootstrapInitialSuperAdmin` غير
+  منشورة (محتاجة Blaze)، فهي حالياً غير فعالة.
+- ترقية أي حساب لأدمن تتم يدوياً من Firebase Console:
+  Firestore > users > مستند المستخدم > حقل `role` = `superAdmin`.
+
+### الخريطة
+- الخريطة بتستخدم OpenStreetMap (مجانية، بدون مفتاح أو فوترة) عبر حزمة
+  flutter_map، وتعمل على الويب والموبايل.
+- لو رجعنا لـ Google Maps لاحقاً: يلزم مفتاح بفوترة مفعلة وإضافة سكربت
+  المفتاح في `web/index.html`.
