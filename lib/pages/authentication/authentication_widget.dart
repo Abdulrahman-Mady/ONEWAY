@@ -156,74 +156,63 @@ class _AuthenticationWidgetState extends State<AuthenticationWidget>
         child: Stack(
           alignment: Alignment.topCenter,
           children: [
-            // Cairo skyline art fills the header; navy scrim keeps the
-            // brand lockup readable over it.
+            // Flat spec navy header like the mockup (no photo).
             Positioned.fill(
-              child: Image.asset(
-                'assets/images/hero_pyramids.jpg',
-                fit: BoxFit.cover,
-                alignment: Alignment.center,
-              ),
+              child: ColoredBox(color: theme.navy),
             ),
-            Positioned.fill(
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      theme.navy.withValues(alpha: 0.60),
-                      theme.navy.withValues(alpha: 0.12),
-                      theme.navy.withValues(alpha: 0.62),
-                    ],
-                  ),
-                ),
+            // Teal wave along the bottom edge, like the mockup divider.
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              height: 34,
+              child: ClipPath(
+                clipper: _TealWaveClipper(),
+                child: ColoredBox(color: theme.primary),
               ),
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(24, 30, 24, 36),
+              padding: const EdgeInsets.fromLTRB(24, 34, 24, 52),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Logo
-                  Container(
-                    width: 84,
-                    height: 84,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.12),
-                      borderRadius:
-                          BorderRadius.circular(theme.designToken.radius.xxl),
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.35),
-                        width: 1.5,
-                      ),
-                    ),
-                    child: const Icon(
-                      Icons.accessible_forward_rounded,
-                      color: Colors.white,
-                      size: 48,
+                  // Mockup logo mark: wheelchair + glowing pin on navy.
+                  ClipOval(
+                    child: Image.asset(
+                      'assets/images/oneway_logo_mark.jpg',
+                      width: 110,
+                      height: 110,
+                      fit: BoxFit.cover,
+                      alignment: Alignment.center,
                     ),
                   ),
-                  const SizedBox(height: 18),
-                  Text(
-                    'ONEWAY',
-                    style: theme.displayMedium.copyWith(
-                      fontSize: 34,
-                      fontWeight: FontWeight.w900,
-                      color: Colors.white,
-                      height: 1.2,
-                      letterSpacing: 1.5,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'مصر بدون عوائق',
-                    style: theme.titleMedium.copyWith(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: theme.gold,
-                      height: 1.4,
+                  const SizedBox(height: 14),
+                  // Mockup wordmark: white ONE + teal WAY.
+                  RichText(
+                    text: TextSpan(
+                      children: [
+                        TextSpan(
+                          text: 'ONE',
+                          style: theme.displayMedium.copyWith(
+                            fontSize: 34,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white,
+                            height: 1.2,
+                            letterSpacing: 1.5,
+                          ),
+                        ),
+                        TextSpan(
+                          text: 'WAY',
+                          style: theme.displayMedium.copyWith(
+                            fontSize: 34,
+                            fontWeight: FontWeight.w900,
+                            color: theme.primary,
+                            height: 1.2,
+                            letterSpacing: 1.5,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -239,7 +228,7 @@ class _AuthenticationWidgetState extends State<AuthenticationWidget>
     return Column(
       children: [
         Text(
-          _model.createAccountMode! ? 'إنشاء حساب جديد' : 'أهلاً بك في OneWay',
+          _model.createAccountMode! ? 'إنشاء حساب جديد' : 'مرحباً بك مجدداً',
           style: theme.headlineSmall.copyWith(
             fontSize: 24,
             fontWeight: FontWeight.w700,
@@ -251,7 +240,7 @@ class _AuthenticationWidgetState extends State<AuthenticationWidget>
         Text(
           _model.createAccountMode!
               ? 'أدخل بياناتك لإنشاء حسابك والبدء في استكشاف الأماكن المجهزة'
-              : 'سجّل دخولك واستمتع بتجربة أسهل',
+              : 'عد للمتابعة',
           style: theme.bodyLarge.copyWith(
             fontSize: 16,
             color: theme.secondaryText,
@@ -275,7 +264,7 @@ class _AuthenticationWidgetState extends State<AuthenticationWidget>
           hint: 'example@mail.com أو 010xxxxxxxx',
           keyboardType: TextInputType.emailAddress,
           textInputAction: TextInputAction.next,
-          prefixIcon: Icons.alternate_email_rounded,
+          prefixIcon: Icons.mail_outline_rounded,
           validator: (value) => _adaptValidator(_model.emailInputTextControllerValidator, value),
         ),
         const SizedBox(height: 16),
@@ -734,4 +723,23 @@ class _AuthTextField extends StatelessWidget {
       validator: validator,
     );
   }
+}
+// Smooth teal wave divider for the auth header (mockup style).
+class _TealWaveClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    final w = size.width;
+    final h = size.height;
+    final path = Path()
+      ..moveTo(0, h * 0.65)
+      ..quadraticBezierTo(w * 0.25, 0, w * 0.5, h * 0.45)
+      ..quadraticBezierTo(w * 0.75, h * 0.9, w, h * 0.3)
+      ..lineTo(w, h)
+      ..lineTo(0, h)
+      ..close();
+    return path;
+  }
+
+  @override
+  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
 }
