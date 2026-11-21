@@ -113,8 +113,9 @@ class _OverviewTabState extends State<_OverviewTab> {
     } on FirebaseException catch (error) {
       if (mounted) {
         setState(() => _seedingMessage = error.code == 'permission-denied'
-            ? 'الحساب الحالي ليس له صلاحية الأدمن في Firestore بعد. '
-                'فعّل دور الأدمن من صفحة /admin/setup ثم أعد تحميل التطبيق.'
+            ? 'الحساب ليس له صلاحية الأدمن في قواعد Firestore بعد. '
+                'الصق أحدث firestore.rules في تبويب Rules بالكونسول وتأكد أن '
+                'دور حسابك superAdmin ثم أعد المحاولة.'
             : 'خطأ أثناء الاستيراد: ${error.message ?? error.code}');
       }
     } catch (e) {
@@ -132,6 +133,9 @@ class _OverviewTabState extends State<_OverviewTab> {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
+        // First-run setup hint (disappears once places exist and rules allow reads)
+        const _SetupHintCard(),
+
         // Admin Greeting & Role Badge
         Card(
           color: theme.primaryDark,
@@ -333,6 +337,65 @@ class _OverviewTabState extends State<_OverviewTab> {
   }
 }
 
+/// Shows a contextual setup hint at the top of the overview tab:
+/// old Firestore rules still live in the console, or the places collection
+/// is still empty. Renders nothing when everything is fine.
+class _SetupHintCard extends StatelessWidget {
+  const _SetupHintCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = FlutterFlowTheme.of(context);
+    return StreamBuilder<QuerySnapshot>(
+      stream: PlacesRecord.collection.limit(1).snapshots(),
+      builder: (context, snapshot) {
+        String? message;
+        IconData icon = Icons.rule_folder_outlined;
+        Color color = theme.warning;
+        if (snapshot.hasError) {
+          message =
+              'قواعد Firestore القديمة ما زالت مطبقة في الكونسول، لذلك تظهر الصفحة فارغة. '
+              'الصق محتوى ملف firestore.rules من المشروع في تبويب Firestore > Rules ثم اضغط Publish.';
+        } else if (snapshot.hasData && snapshot.data!.docs.isEmpty) {
+          icon = Icons.cloud_download_outlined;
+          color = theme.info;
+          message =
+              'قاعدة البيانات فارغة حالياً. ابدأ باستيراد الأماكن المعتمدة الأولية '
+              'من زر «استيراد الأماكن المعتمدة الأولية» بالأسفل لتظهر البيانات هنا.';
+        }
+        if (message == null) return const SizedBox.shrink();
+        return Container(
+          margin: const EdgeInsets.only(bottom: 16),
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: color.withValues(alpha: 0.4)),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(icon, color: color, size: 24),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  message,
+                  style: TextStyle(
+                    fontSize: 13,
+                    height: 1.6,
+                    fontWeight: FontWeight.w600,
+                    color: theme.primaryText,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
 class _StatCard extends StatelessWidget {
   const _StatCard({
     required this.title,
@@ -356,6 +419,8 @@ class _StatCard extends StatelessWidget {
     return StreamBuilder<QuerySnapshot>(
       stream: stream,
       builder: (context, snapshot) {
+        final hasError = snapshot.hasError;
+        final isLoading = !snapshot.hasData && !hasError;
         final count = snapshot.hasData ? snapshot.data!.docs.length : 0;
         return InkWell(
           onTap: onTap,
@@ -385,17 +450,26 @@ class _StatCard extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 12),
-                Text(
-                  '$count',
-                  style: TextStyle(
-                    fontSize: 26,
-                    fontWeight: FontWeight.bold,
-                    color: color,
+                if (hasError)
+                  Icon(Icons.sync_problem_rounded, color: theme.error, size: 26)
+                else if (isLoading)
+                  SizedBox.square(
+                    dimension: 22,
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2.5, color: color),
+                  )
+                else
+                  Text(
+                    '$count',
+                    style: TextStyle(
+                      fontSize: 26,
+                      fontWeight: FontWeight.bold,
+                      color: color,
+                    ),
                   ),
-                ),
                 const SizedBox(height: 4),
                 Text(
-                  subtitle(count),
+                  hasError ? 'تحقق من قواعد Firestore' : subtitle(count),
                   style: TextStyle(fontSize: 12, color: theme.secondaryText),
                 ),
               ],
