@@ -118,7 +118,7 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
                   padding: const EdgeInsets.fromLTRB(24, 24, 24, 100),
                   sliver: SliverList(
                     delegate: SliverChildListDelegate([
-                      _buildEmergencyCard(theme),
+                      _buildQuickActions(theme),
                       const SizedBox(height: 24),
                       _buildCategoriesSection(theme),
                       const SizedBox(height: 24),
@@ -226,14 +226,7 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
   Widget _buildHeroHeader(FlutterFlowTheme theme) {
     return Container(
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            theme.primary,
-            theme.primaryDark,
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: theme.navy,
         borderRadius: const BorderRadius.vertical(
           bottom: Radius.circular(32),
         ),
@@ -241,10 +234,47 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
           theme.designToken.shadow.primaryLg,
         ],
       ),
-      child: SafeArea(
-        bottom: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+      child: ClipRRect(
+        borderRadius: const BorderRadius.vertical(
+          bottom: Radius.circular(32),
+        ),
+        child: Stack(
+          alignment: Alignment.topCenter,
+          children: [
+            // Cairo skyline band along the header's bottom edge.
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: Image.asset(
+                'assets/images/hero_cairo.png',
+                height: 110,
+                fit: BoxFit.cover,
+                alignment: const Alignment(0, 0.5),
+              ),
+            ),
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              height: 110,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      theme.navy.withValues(alpha: 0.75),
+                      theme.navy.withValues(alpha: 0.15),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            SafeArea(
+              bottom: false,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(24, 16, 24, 72),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -305,100 +335,109 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
                   const SizedBox(width: 12),
                   _HeroActionButton(
                     icon: Icons.mic_rounded,
-                    backgroundColor: theme.secondary,
+                    backgroundColor: theme.gold,
                     onTap: () => context.goNamed(VoiceAssistantInterfaceWidget.routeName),
                   ),
                 ],
               ),
             ],
           ),
+              ),
+            ),
+          ]),
         ),
-      ),
-    );
+      );
   }
 
-  Widget _buildEmergencyCard(FlutterFlowTheme theme) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
+  // Mockup quick-action grid: 2x2 white cards (map, SOS, favorites, report).
+  Widget _buildQuickActions(FlutterFlowTheme theme) {
+    final items = <({
+      String label,
+      IconData icon,
+      Color color,
+      void Function() onTap,
+    })>[
+      (
+        label: 'الخريطة',
+        icon: Icons.map_rounded,
+        color: theme.primary,
+        onTap: () => context.pushNamed(ExploreMapWidget.routeName),
+      ),
+      (
+        label: 'الطوارئ',
+        icon: Icons.emergency_rounded,
+        color: theme.error,
         onTap: () => context.goNamed(EmergencySOSWidget.routeName),
-        borderRadius: BorderRadius.circular(theme.designToken.radius.xl),
-        splashColor: theme.error.withValues(alpha: 0.1),
-        highlightColor: theme.error.withValues(alpha: 0.05),
-        child: Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
+      ),
+      (
+        label: 'المفضلة',
+        icon: Icons.favorite_rounded,
+        color: theme.tertiary,
+        onTap: () => context.pushNamed(FavoritesPageWidget.routeName),
+      ),
+      (
+        label: 'بلّغ عن عائق',
+        icon: Icons.report_problem_rounded,
+        color: theme.navy,
+        onTap: () => context.pushNamed(SubmitAccessibilityReportWidget.routeName),
+      ),
+    ];
+    return GridView.count(
+      crossAxisCount: 2,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      mainAxisSpacing: 14,
+      crossAxisSpacing: 14,
+      childAspectRatio: 1.55,
+      children: [
+        for (final item in items)
+          Material(
+            color: theme.surface,
             borderRadius: BorderRadius.circular(theme.designToken.radius.xl),
-            gradient: LinearGradient(
-              colors: [
-                theme.error.withValues(alpha: 0.1),
-                theme.error.withValues(alpha: 0.05),
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            border: Border.all(
-              color: theme.error.withValues(alpha: 0.3),
-              width: 1,
-            ),
-            boxShadow: [
-              BoxShadow(
-                blurRadius: 12,
-                color: theme.error.withValues(alpha: 0.15),
-                offset: const Offset(0, 4),
-                spreadRadius: 0,
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(14),
+            elevation: 0,
+            child: InkWell(
+              onTap: item.onTap,
+              borderRadius: BorderRadius.circular(theme.designToken.radius.xl),
+              child: Container(
                 decoration: BoxDecoration(
-                  color: theme.error,
-                  borderRadius: BorderRadius.circular(theme.designToken.radius.lg),
-                ),
-                child: Icon(
-                  Icons.emergency_rounded,
-                  color: theme.onError,
-                  size: 28,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'مساعدة طوارئ',
-                      style: theme.titleMedium.copyWith(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: theme.error,
-                        height: 1.3,
-                      ),
+                  borderRadius:
+                      BorderRadius.circular(theme.designToken.radius.xl),
+                  border: Border.all(color: theme.divider),
+                  boxShadow: [
+                    BoxShadow(
+                      blurRadius: 14,
+                      color: theme.shadow.withValues(alpha: 0.06),
+                      offset: const Offset(0, 4),
                     ),
-                    const SizedBox(height: 4),
+                  ],
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 46,
+                      height: 46,
+                      decoration: BoxDecoration(
+                        color: item.color.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Icon(item.icon, color: item.color, size: 24),
+                    ),
+                    const SizedBox(height: 8),
                     Text(
-                      'الوصول السريع لأقرب مستشفى أو صيدلية',
-                      style: theme.bodyMedium.copyWith(
+                      item.label,
+                      style: theme.titleSmall.copyWith(
                         fontSize: 14,
-                        color: theme.onSurfaceVariant,
-                        height: 1.5,
+                        fontWeight: FontWeight.w700,
+                        color: theme.primaryText,
                       ),
                     ),
                   ],
                 ),
               ),
-              Icon(
-                Icons.arrow_forward_ios_rounded,
-                color: theme.error,
-                size: 18,
-              ),
-            ],
+            ),
           ),
-        ),
-      ),
+      ],
     );
   }
 
