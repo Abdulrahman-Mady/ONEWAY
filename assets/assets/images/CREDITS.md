@@ -23,3 +23,6 @@ are original flat illustrations generated for this project.
 
 - assets/images/home_skyline_band.jpg - original AI-generated illustration (Cairo skyline: pyramids, Cairo Tower, Nile), created for ONEWAY from the user-provided design mockup. No external source, no attribution required.
 - assets/images/oneway_logo_mark.jpg - original AI-generated ONEWAY logo mark (wheelchair + glowing pin), created for ONEWAY from the user-provided design mockup. No external source, no attribution required.
+- splash_hero_band.jpg: original AI-generated illustration (Cairo dusk panorama), created for this project, no attribution required.
+- onboarding_hero.jpg: original AI-generated illustration (wheelchair traveler facing Cairo), created for this project, no attribution required.
+- signup_skyline.jpg: original AI-generated illustration (daytime Cairo skyline), created for this project, no attribution required.
