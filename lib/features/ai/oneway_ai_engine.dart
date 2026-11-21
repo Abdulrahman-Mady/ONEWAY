@@ -75,6 +75,15 @@ class OnewayAIEngine {
       }
     }
 
+    // 1b. Conversational small talk - instant, works fully offline.
+    final smallTalk = _smallTalkReply(query);
+    if (smallTalk != null) {
+      return AIResponse(
+        intent: AIIntentType.generalInfo,
+        replyText: smallTalk,
+      );
+    }
+
     // 2. Try the server-side LLM assistant (Gemini via Cloud Function).
     // Returns null when the function is not deployed, has no API key, or the
     // device is offline - the local keyword engine below takes over then.
@@ -106,6 +115,48 @@ class OnewayAIEngine {
 
     // 4. Search and Grounded Retrieval for Places
     return await _searchPlacesWithAI(rawQuery, query);
+  }
+
+  /// Friendly Arabic small-talk replies so the assistant can hold a natural
+  /// conversation without any server. Returns null when the query is not
+  /// small talk and should continue to the search engines.
+  static String? _smallTalkReply(String query) {
+    bool any(List<String> words) => words.any(query.contains);
+
+    if (any(['السلام عليكم', 'صباح الخير', 'مساء الخير', 'اهلا', 'أهلا',
+        'هاي', 'مرحبا', 'ازيك', 'ازاي حالك'])) {
+      return 'أهلاً وسهلاً بك! أنا مساعد ONEWAY. اسألني عن أماكن مجهزة '
+          'لكراسي الحركة، أو قل لي مثلاً: «عايز مستشفى قريبة فيها منحدر» '
+          'أو «افتح الخريطة».';
+    }
+    if (any(['عامل ايه', 'اخبارك', 'أخبارك', 'كيف حالك', 'عامل إيه'])) {
+      return 'الحمد لله تمام وجاهز لمساعدتك! تحب أدور لك على مكان معين '
+          'أو تحتاج شيئاً في التطبيق؟';
+    }
+    if (any(['مين انت', 'مين أنت', 'عرفني بنفسك', 'انت مين', 'انت من',
+        'تقدر تعمل ايه', 'تقدر تعمل إيه', 'مساعده', 'مساعدة'])) {
+      return 'أنا المساعد الصوتي لتطبيق ONEWAY. أقدر أبحث لك عن مستشفيات '
+          'ومطاعم ومولات مجهزة للكراسي المتحركة، أفتح لك الخريطة أو المفضلة '
+          'أو صفحة البلاغات، وأطلق نداء استغاثة بموقعك عند الحاجة. '
+          'اتكلم براحتك وأنا أسمعك.';
+    }
+    if (any(['شكرا', 'متشكر', 'تسلم', 'يعطيك العافيه', 'ربنا يخليك'])) {
+      return 'العفو، هذا واجبي! لو احتجت أي شيء آخر أنا هنا أسمعك.';
+    }
+    if (any(['مع السلامه', 'باي', 'تصبح على خير', 'سلام'])) {
+      return 'مع السلامة! أتمنى لك يوماً سهلاً بلا عوائق.';
+    }
+    if (any(['الساعه كام', 'الساعة كام', 'الوقت'])) {
+      final now = DateTime.now();
+      final hour = now.hour % 12 == 0 ? 12 : now.hour % 12;
+      final period = now.hour < 12 ? 'صباحاً' : 'مساءً';
+      return 'الساعة الآن $hour:${now.minute.toString().padLeft(2, '0')} $period تقريباً.';
+    }
+    if (any(['النهارده كام', 'التاريخ', 'النهارده ايه', 'اليوم ايه'])) {
+      final now = DateTime.now();
+      return 'اليوم ${now.day}/${now.month}/${now.year}.';
+    }
+    return null;
   }
 
   /// Calls the assistantQuery Cloud Function and maps its JSON answer onto an

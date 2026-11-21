@@ -40,6 +40,9 @@ class _VoiceAssistantInterfaceWidgetState
   final FlutterTts _flutterTts = FlutterTts();
   bool _speechAvailable = false;
   bool _isSpeaking = false;
+  // Conversation mode keeps the dialogue going: after each spoken reply the
+  // mic opens again automatically. Tapping the mic while it speaks pauses it.
+  bool _conversationMode = true;
 
   @override
   void initState() {
@@ -48,7 +51,9 @@ class _VoiceAssistantInterfaceWidgetState
     _initSpeech();
     _initTts();
 
-    // Check for initial query from navigation
+    // Check for initial query from navigation, otherwise greet out loud.
+    // The TTS completion handler opens the mic right after the greeting,
+    // so the assistant starts listening immediately when the page opens.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final router = GoRouter.of(context);
       final currentRoute = router.routerDelegate.currentConfiguration;
@@ -56,6 +61,28 @@ class _VoiceAssistantInterfaceWidgetState
       final extra = currentRoute.uri.queryParameters['initialQuery'];
       if (extra != null && extra.isNotEmpty) {
         _handleQuery(extra);
+      } else {
+        _speak('أهلاً بك في مساعد ONEWAY. أنا أسمعك، اتكلم براحتك.');
+      }
+    });
+  }
+
+  /// Opens the mic again while the conversation is active.
+  void _maybeResumeListening() {
+    if (!mounted ||
+        !_conversationMode ||
+        !_speechAvailable ||
+        _isListening ||
+        _isProcessing) {
+      return;
+    }
+    Future.delayed(const Duration(milliseconds: 400), () {
+      if (mounted &&
+          _conversationMode &&
+          !_isListening &&
+          !_isProcessing &&
+          !_isSpeaking) {
+        _startListening();
       }
     });
   }
@@ -74,6 +101,9 @@ class _VoiceAssistantInterfaceWidgetState
               if (_currentQuery.trim().isNotEmpty &&
                   _currentQuery != 'أنا أستمع إليك الآن...') {
                 _handleQuery(_currentQuery.trim());
+              } else {
+                // Heard nothing - keep the conversation going.
+                _maybeResumeListening();
               }
             }
           }
@@ -92,6 +122,8 @@ class _VoiceAssistantInterfaceWidgetState
       await _flutterTts.setPitch(1.0);
       _flutterTts.setCompletionHandler(() {
         if (mounted) setState(() => _isSpeaking = false);
+        // Conversation loop: once the reply is spoken, listen again.
+        _maybeResumeListening();
       });
       _flutterTts.setErrorHandler((msg) {
         if (mounted) setState(() => _isSpeaking = false);
@@ -127,6 +159,7 @@ class _VoiceAssistantInterfaceWidgetState
 
   @override
   void dispose() {
+    _conversationMode = false;
     _model.dispose();
     _textController.dispose();
     _speech.stop();
@@ -163,6 +196,7 @@ class _VoiceAssistantInterfaceWidgetState
       // If navigation requested, execute after brief feedback
       if (response.intent == AIIntentType.navigation &&
           response.navigationRoute != null) {
+        _conversationMode = false; // leaving the conversation for a screen
         Future.delayed(const Duration(milliseconds: 1400), () {
           if (mounted) {
             context.pushNamed(response.navigationRoute!);
@@ -181,6 +215,36 @@ class _VoiceAssistantInterfaceWidgetState
     }
   }
 
+  Future<void> _startListening() async {
+    if (!_speechAvailable) {
+      _showQuickCommandsSheet();
+      return;
+    }
+    if (_isSpeaking) {
+      await _stopSpeaking();
+    }
+    setState(() {
+      _isListening = true;
+      _currentQuery = 'أنا أستمع إليك الآن...';
+    });
+    await _speech.listen(
+      localeId: 'ar_EG',
+      listenFor: const Duration(seconds: 15),
+      pauseFor: const Duration(seconds: 3),
+      onResult: (result) {
+        setState(() {
+          _currentQuery = result.recognizedWords;
+          _textController.text = result.recognizedWords;
+        });
+        if (result.finalResult && result.recognizedWords.trim().isNotEmpty) {
+          _speech.stop();
+          setState(() => _isListening = false);
+          _handleQuery(result.recognizedWords.trim());
+        }
+      },
+    );
+  }
+
   Future<void> _toggleMic() async {
     if (_isListening) {
       await _speech.stop();
@@ -189,35 +253,13 @@ class _VoiceAssistantInterfaceWidgetState
           _currentQuery != 'أنا أستمع إليك الآن...') {
         _handleQuery(_currentQuery.trim());
       }
+    } else if (_isSpeaking) {
+      // Interrupt the reply and pause the conversation.
+      _conversationMode = false;
+      await _stopSpeaking();
     } else {
-      if (_isSpeaking) {
-        await _stopSpeaking();
-      }
-      if (_speechAvailable) {
-        setState(() {
-          _isListening = true;
-          _currentQuery = 'أنا أستمع إليك الآن...';
-        });
-        await _speech.listen(
-          localeId: 'ar_EG',
-          listenFor: const Duration(seconds: 15),
-          pauseFor: const Duration(seconds: 3),
-          onResult: (result) {
-            setState(() {
-              _currentQuery = result.recognizedWords;
-              _textController.text = result.recognizedWords;
-            });
-            if (result.finalResult &&
-                result.recognizedWords.trim().isNotEmpty) {
-              _speech.stop();
-              setState(() => _isListening = false);
-              _handleQuery(result.recognizedWords.trim());
-            }
-          },
-        );
-      } else {
-        _showQuickCommandsSheet();
-      }
+      _conversationMode = true;
+      await _startListening();
     }
   }
 
