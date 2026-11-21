@@ -121,8 +121,10 @@ class EmergencyService {
     // 1. Try launching WhatsApp directly
     final whatsappCleanPhone =
         phone.startsWith('01') ? '2$phone' : phone.replaceAll('+', '');
+    // wa.me works on phones (opens the app) and desktop (WhatsApp Web),
+    // unlike the whatsapp:// scheme which dies on a blank tab in browsers.
     final whatsappUri = Uri.parse(
-      'whatsapp://send?phone=$whatsappCleanPhone&text=${Uri.encodeComponent(alertMessage)}',
+      'https://wa.me/$whatsappCleanPhone?text=${Uri.encodeComponent(alertMessage)}',
     );
 
     // 2. Fallback SMS URI
