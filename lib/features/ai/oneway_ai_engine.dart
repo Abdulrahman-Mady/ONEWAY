@@ -218,7 +218,10 @@ class OnewayAIEngine {
     String normalizedQuery,
   ) async {
     try {
-      final snapshot = await PlacesRecord.collection.limit(25).get();
+      final snapshot = await PlacesRecord.collection
+          .where('verification_status', isEqualTo: 'verified')
+          .limit(25)
+          .get();
       final allPlaces = snapshot.docs.map(PlacesRecord.fromSnapshot).toList();
 
       if (allPlaces.isEmpty) {

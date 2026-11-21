@@ -159,7 +159,9 @@ class _ExploreMapWidgetState extends State<ExploreMapWidget>
           children: [
             // Map
             StreamBuilder<QuerySnapshot>(
-              stream: PlacesRecord.collection.snapshots(),
+              stream: PlacesRecord.collection
+                  .where('verification_status', isEqualTo: 'verified')
+                  .snapshots(),
               builder: (context, snapshot) {
                 final allPlaces = (snapshot.hasData)
                     ? snapshot.data!.docs

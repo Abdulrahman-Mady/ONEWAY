@@ -99,7 +99,10 @@ class _PlaceExplorerPageState extends State<PlaceExplorerPage> {
           ],
         ),
         body: StreamBuilder<QuerySnapshot>(
-          stream: PlacesRecord.collection.limit(50).snapshots(),
+          stream: PlacesRecord.collection
+              .where('verification_status', isEqualTo: 'verified')
+              .limit(50)
+              .snapshots(),
           builder: (context, snapshot) {
             if (snapshot.hasError) return _ErrorState(error: snapshot.error);
             if (!snapshot.hasData) {
@@ -641,6 +644,7 @@ class _PlaceDetailPageState extends State<PlaceDetailPage> {
             StreamBuilder<QuerySnapshot>(
               stream: ReviewsRecord.collection
                   .where('place_id', isEqualTo: place.reference.id)
+                  .where('status', isEqualTo: 'published')
                   .snapshots(),
               builder: (context, snapshot) {
                 if (!snapshot.hasData) {
