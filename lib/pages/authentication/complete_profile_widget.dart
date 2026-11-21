@@ -8,7 +8,6 @@ import '/flutter_flow/nav/nav.dart';
 import '/index.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 class CompleteProfileWidget extends StatefulWidget {
   const CompleteProfileWidget({super.key});
@@ -371,24 +370,24 @@ class _CompleteProfileWidgetState extends State<CompleteProfileWidget>
 
     setState(() => _isLoading = true);
 
-    final updates = <String, dynamic>{};
-
-    if (_nameController.text.trim().isNotEmpty) {
-      updates['display_name'] = _nameController.text.trim();
-    }
-    if (_phoneController.text.trim().isNotEmpty) {
-      updates['phone_number'] = _phoneController.text.trim();
-    }
-
-    if (updates.isNotEmpty) {
-      updates['updated_time'] = FieldValue.serverTimestamp();
-      await AuthService.instance.updateUserProfile(
-        displayName: _nameController.text.trim().isNotEmpty ? _nameController.text.trim() : null,
-      );
-    }
+    // Save BOTH fields - previously the phone number was collected but never
+    // written, so the profile stayed incomplete and the router sent the user
+    // straight back to this screen in a loop.
+    final result = await AuthService.instance.updateUserProfile(
+      displayName: _nameController.text.trim(),
+      phoneNumber: _normalizePhone(_phoneController.text),
+    );
 
     if (!mounted) return;
     setState(() => _isLoading = false);
+
+    if (!result.success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content: Text(result.message ?? 'تعذر حفظ الملف الشخصي')),
+      );
+      return;
+    }
 
     AuthRouter.instance.navigateAfterLogin(context);
   }
@@ -399,12 +398,28 @@ class _CompleteProfileWidgetState extends State<CompleteProfileWidget>
     if (!mounted) return;
     setState(() => _isLoading = false);
 
-    AuthRouter.instance.navigateAfterLogin(context);
+    // Skip means skip: go home directly. Routing through determineRoute here
+    // would bounce the user back to this screen (profile still incomplete).
+    context.goNamed(HomeDashboardWidget.routeName);
+  }
+
+  /// Accepts 010xxxxxxxx, +2010xxxxxxxx, 002010xxxxxxxx and 2010xxxxxxxx,
+  /// and normalizes to the local 01xxxxxxxxx form the app stores and dials.
+  String _normalizePhone(String phone) {
+    var cleaned = phone.replaceAll(RegExp(r'[\s\-\(\)]'), '');
+    if (cleaned.startsWith('+20')) {
+      cleaned = '0${cleaned.substring(3)}';
+    } else if (cleaned.startsWith('0020')) {
+      cleaned = '0${cleaned.substring(4)}';
+    } else if (cleaned.startsWith('20') && cleaned.length == 12) {
+      cleaned = '0${cleaned.substring(2)}';
+    }
+    return cleaned;
   }
 
   bool _isValidPhone(String phone) {
-    final cleaned = phone.replaceAll(RegExp(r'[\s\-]'), '');
-    return RegExp(r'^(010|011|012|015)\d{8}$').hasMatch(cleaned);
+    return RegExp(r'^(010|011|012|015)\d{8}$')
+        .hasMatch(_normalizePhone(phone));
   }
 
   OutlineInputBorder _inputBorder(FlutterFlowTheme theme) => OutlineInputBorder(
