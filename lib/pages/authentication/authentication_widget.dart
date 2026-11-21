@@ -92,34 +92,43 @@ class _AuthenticationWidgetState extends State<AuthenticationWidget>
           child: SlideTransition(
             position: _slideAnimation,
             child: SafeArea(
+              bottom: false,
               child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.symmetric(horizontal: 24),
                 // Plain scrollable column: the previous ConstrainedBox +
                 // IntrinsicHeight + Spacer layout overflowed by a few pixels
                 // on some devices (e.g. Android 15 edge-to-edge).
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const SizedBox(height: 40),
-                    // Logo and branding
+                    // Navy Cairo hero header
                     _buildHeader(theme),
-                    const SizedBox(height: 48),
-                    // Form
-                    _buildForm(theme),
-                    const SizedBox(height: 24),
-                    // Divider
-                    _buildDivider(theme),
-                    const SizedBox(height: 24),
-                    // Social login
-                    _buildSocialLogin(theme),
-                    const SizedBox(height: 24),
-                    // Business Owner CTA Section
-                    _buildBusinessOwnerCTA(theme),
-                    const SizedBox(height: 16),
-                    // Footer
-                    _buildFooter(theme),
-                    const SizedBox(height: 32),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          const SizedBox(height: 28),
+                          _buildModeTitle(theme),
+                          const SizedBox(height: 24),
+                          // Form
+                          _buildForm(theme),
+                          const SizedBox(height: 24),
+                          // Divider
+                          _buildDivider(theme),
+                          const SizedBox(height: 24),
+                          // Social login
+                          _buildSocialLogin(theme),
+                          const SizedBox(height: 24),
+                          // Business Owner CTA Section
+                          _buildBusinessOwnerCTA(theme),
+                          const SizedBox(height: 16),
+                          // Footer
+                          _buildFooter(theme),
+                          const SizedBox(height: 32),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -131,53 +140,82 @@ class _AuthenticationWidgetState extends State<AuthenticationWidget>
   }
 
   Widget _buildHeader(FlutterFlowTheme theme) {
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.navy,
+        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(36)),
+      ),
+      child: ClipRRect(
+        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(36)),
+        child: Stack(
+          children: [
+            // Cairo skyline art, anchored low so it frames the header.
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: Image.asset(
+                'assets/images/hero_cairo.png',
+                fit: BoxFit.fitWidth,
+                alignment: Alignment.bottomCenter,
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 32, 24, 100),
+              child: Column(
+                children: [
+                  // Logo
+                  Container(
+                    width: 84,
+                    height: 84,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.12),
+                      borderRadius:
+                          BorderRadius.circular(theme.designToken.radius.xxl),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.35),
+                        width: 1.5,
+                      ),
+                    ),
+                    child: const Icon(
+                      Icons.accessible_forward_rounded,
+                      color: Colors.white,
+                      size: 48,
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  Text(
+                    'ONEWAY',
+                    style: theme.displayMedium.copyWith(
+                      fontSize: 34,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white,
+                      height: 1.2,
+                      letterSpacing: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'مصر بدون عوائق',
+                    style: theme.titleMedium.copyWith(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: theme.gold,
+                      height: 1.4,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildModeTitle(FlutterFlowTheme theme) {
     return Column(
       children: [
-        // Logo
-        Container(
-          width: 96,
-          height: 96,
-          decoration: BoxDecoration(
-            color: theme.primary.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(theme.designToken.radius.xxl),
-            boxShadow: [
-              BoxShadow(
-                blurRadius: 20,
-                color: theme.primary.withValues(alpha: 0.2),
-                offset: const Offset(0, 8),
-                spreadRadius: 0,
-              ),
-            ],
-          ),
-          child: Icon(
-            Icons.accessible_forward_rounded,
-            color: theme.primary,
-            size: 56,
-          ),
-        ),
-        const SizedBox(height: 24),
-        // Title
-        Text(
-          'ONEWAY',
-          style: theme.displayMedium.copyWith(
-            fontSize: 36,
-            fontWeight: FontWeight.w900,
-            color: theme.primary,
-            height: 1.2,
-            letterSpacing: -1,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          'مصر بدون عوائق',
-          style: theme.titleMedium.copyWith(
-            fontSize: 16,
-            color: theme.secondaryText,
-            height: 1.4,
-          ),
-        ),
-        const SizedBox(height: 32),
-        // Subtitle
         Text(
           _model.createAccountMode! ? 'إنشاء حساب جديد' : 'أهلاً بك في OneWay',
           style: theme.headlineSmall.copyWith(
