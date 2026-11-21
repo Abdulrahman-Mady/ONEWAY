@@ -26,6 +26,18 @@ class VoiceAssistantInterfaceWidget extends StatefulWidget {
 
 class _VoiceAssistantInterfaceWidgetState
     extends State<VoiceAssistantInterfaceWidget> {
+  // Decorative waveform for the mockup-style idle hero.
+  static const List<double> _waveHeights = [
+    8, 14, 22, 30, 18, 34, 24, 38, 20, 28, 40, 26, 18, 32, 22, 14, 26, 16, 10, 18, 8
+  ];
+  static const List<Color> _waveColors = [
+    Color(0xFF19B8C4), Color(0xFF19B8C4), Color(0xFF19B8C4), Color(0xFF19B8C4),
+    Color(0xFF19B8C4), Color(0xFF19B8C4), Color(0xFF19B8C4), Color(0xFFB04FD8),
+    Color(0xFF19B8C4), Color(0xFF19B8C4), Color(0xFF19B8C4), Color(0xFF19B8C4),
+    Color(0xFFE04FA8), Color(0xFF19B8C4), Color(0xFF19B8C4), Color(0xFF19B8C4),
+    Color(0xFFB04FD8), Color(0xFF19B8C4), Color(0xFF19B8C4), Color(0xFF19B8C4),
+    Color(0xFF19B8C4),
+  ];
   late VoiceAssistantInterfaceModel _model;
   final scaffoldKey = GlobalKey<ScaffoldState>();
 
@@ -343,31 +355,14 @@ class _VoiceAssistantInterfaceWidgetState
       },
       child: Scaffold(
         key: scaffoldKey,
-        backgroundColor: theme.background,
+        backgroundColor: theme.navy,
         body: Directionality(
           textDirection: TextDirection.rtl,
           child: Stack(
             children: [
-              // Background pattern
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Container(
-                    height: 180,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [theme.primary, theme.primaryDark],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: Container(
-                      color: theme.background,
-                    ),
-                  ),
-                ],
+              // Deep navy backdrop like the mockup's assistant screen.
+              Positioned.fill(
+                child: Container(color: theme.navy),
               ),
               SafeArea(
                 child: Column(
@@ -387,13 +382,10 @@ class _VoiceAssistantInterfaceWidgetState
                           ),
                           Row(
                             children: [
-                              Icon(Icons.auto_awesome,
-                                  color: theme.tertiary, size: 22),
-                              const SizedBox(width: 8),
                               Text(
-                                'ONEWAY AI Assistant',
+                                'المساعد الصوتي',
                                 style: theme.titleMedium.copyWith(
-                                  fontSize: 16,
+                                  fontSize: 18,
                                   fontWeight: FontWeight.w700,
                                   color: Colors.white,
                                 ),
@@ -564,19 +556,115 @@ class _VoiceAssistantInterfaceWidgetState
                               }),
                             ],
 
-                            // Suggestions when idle
+                            // Suggestions when idle — mockup hero: example
+                            // bubble, glowing mic, colorful waveform, caption.
                             if (_lastResponse == null && !_isProcessing) ...[
-                              const SizedBox(height: 30),
+                              const SizedBox(height: 12),
+                              Center(
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 20, vertical: 12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withValues(alpha: 0.06),
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(
+                                      color: Colors.white.withValues(alpha: 0.15),
+                                      width: 1,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    'مثال: ابحث عن مستشفى قريب مني',
+                                    textAlign: TextAlign.center,
+                                    style: theme.bodyMedium.copyWith(
+                                      color: Colors.white.withValues(alpha: 0.9),
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 20),
+                              Center(
+                                child: GestureDetector(
+                                  onTap: _toggleMic,
+                                  child: Container(
+                                    width: 118,
+                                    height: 118,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: theme.primaryDark,
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: theme.primary
+                                              .withValues(alpha: 0.5),
+                                          blurRadius: 40,
+                                          spreadRadius: 12,
+                                        ),
+                                        BoxShadow(
+                                          color: theme.primary
+                                              .withValues(alpha: 0.25),
+                                          blurRadius: 70,
+                                          spreadRadius: 26,
+                                        ),
+                                      ],
+                                      border: Border.all(
+                                        color: theme.primary,
+                                        width: 3.5,
+                                      ),
+                                    ),
+                                    child: Icon(
+                                      _isListening ? Icons.mic : Icons.mic_none,
+                                      color: Colors.white,
+                                      size: 52,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 22),
+                              // Colorful decorative waveform like the mockup.
+                              Center(
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    for (var i = 0; i < 21; i++)
+                                      Container(
+                                        width: 4,
+                                        height: _waveHeights[i],
+                                        margin: const EdgeInsets.symmetric(
+                                            horizontal: 2.5),
+                                        decoration: BoxDecoration(
+                                          color: _waveColors[i].withValues(
+                                              alpha: _isListening ? 1.0 : 0.75),
+                                          borderRadius:
+                                              BorderRadius.circular(2),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              Center(
+                                child: Text(
+                                  _isListening
+                                      ? 'جاري الاستماع...'
+                                      : 'اضغط المايك واتكلم',
+                                  style: theme.titleMedium.copyWith(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 24),
                               Center(
                                 child: Text(
                                   'جرّب أن تطلب مني بالصوت أو النص:',
                                   style: theme.labelMedium.copyWith(
-                                    // Sits over the teal header gradient in idle state.
-                                    color: Colors.white.withValues(alpha: 0.9),
+                                    color: Colors.white.withValues(alpha: 0.85),
                                   ),
                                 ),
                               ),
-                              const SizedBox(height: 16),
+                              const SizedBox(height: 14),
                               AssistantSuggestionWidget(
                                 query: '🚨 اطلب استغاثة من مرافقي وابعث موقعي',
                                 onTap: () => _handleQuery(
@@ -610,21 +698,21 @@ class _VoiceAssistantInterfaceWidgetState
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: theme.surface,
+                        color: theme.primaryDark,
                         borderRadius: const BorderRadius.vertical(
                           top: Radius.circular(24),
                         ),
                         boxShadow: [
                           BoxShadow(
                             blurRadius: 20,
-                            color: theme.shadow.withValues(alpha: 0.1),
+                            color: Colors.black.withValues(alpha: 0.35),
                             offset: const Offset(0, -4),
                             spreadRadius: 0,
                           ),
                         ],
                         border: Border(
                           top: BorderSide(
-                            color: theme.outlineVariant.withValues(alpha: 0.5),
+                            color: Colors.white.withValues(alpha: 0.12),
                             width: 0.5,
                           ),
                         ),
@@ -643,22 +731,28 @@ class _VoiceAssistantInterfaceWidgetState
                                       _handleQuery(text);
                                       _textController.clear();
                                     },
+                                    style: theme.bodyMedium.copyWith(
+                                      color: Colors.white,
+                                    ),
                                     decoration: InputDecoration(
                                       hintText: 'اكتب سؤالك هنا...',
                                       hintStyle: theme.bodyMedium.copyWith(
-                                        color: theme.hintText,
+                                        color: Colors.white.withValues(alpha: 0.55),
                                       ),
+                                      filled: true,
+                                      fillColor:
+                                          Colors.white.withValues(alpha: 0.08),
                                       border: OutlineInputBorder(
                                         borderRadius:
                                             BorderRadius.circular(theme.designToken.radius.xl),
                                         borderSide:
-                                            BorderSide(color: theme.outlineVariant, width: 1.5),
+                                            BorderSide(color: Colors.white.withValues(alpha: 0.3), width: 1.5),
                                       ),
                                       enabledBorder: OutlineInputBorder(
                                         borderRadius:
                                             BorderRadius.circular(theme.designToken.radius.xl),
                                         borderSide:
-                                            BorderSide(color: theme.outlineVariant, width: 1.5),
+                                            BorderSide(color: Colors.white.withValues(alpha: 0.3), width: 1.5),
                                       ),
                                       focusedBorder: OutlineInputBorder(
                                         borderRadius:
@@ -742,7 +836,7 @@ class _VoiceAssistantInterfaceWidgetState
                                   ? 'جارٍ الاستماع... اضغط للإيقاف'
                                   : 'اضغط على الميكروفون للتحدث',
                               style: theme.labelSmall.copyWith(
-                                color: theme.tertiaryText,
+                                color: Colors.white.withValues(alpha: 0.7),
                               ),
                             ),
                           ],
