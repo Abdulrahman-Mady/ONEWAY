@@ -373,13 +373,13 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
       ),
       (
         label: 'بلّغ عن عائق',
-        icon: const Icon(Icons.mark_email_unread_rounded,
+        icon: const Icon(Icons.mail_rounded,
             color: Color(0xFF2E7FD9), size: 42),
         onTap: () => context.pushNamed(SubmitAccessibilityReportWidget.routeName),
       ),
       (
         label: 'المفضلة',
-        icon: const Icon(Icons.favorite_outline_rounded,
+        icon: const Icon(Icons.favorite_border_rounded,
             color: Color(0xFF2E7FD9), size: 42),
         onTap: () => context.pushNamed(FavoritesPageWidget.routeName),
       ),
