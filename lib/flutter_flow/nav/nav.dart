@@ -458,8 +458,9 @@ class _LaunchGateState extends State<_LaunchGate> {
   }
 }
 
-/// Full-bleed splash shown while launch state resolves: deep-navy dusk sky,
-/// Cairo skyline art along the bottom, brand mark and a loading line.
+/// Full-bleed splash shown while launch state resolves: navy brand block
+/// (wheelchair + pin mark, ONEWAY wordmark, tagline), an illustrated Cairo
+/// band, and a teal wave rolling into a white sheet with the loading line.
 class _OneWaySplash extends StatelessWidget {
   const _OneWaySplash();
 
@@ -468,91 +469,137 @@ class _OneWaySplash extends StatelessWidget {
     final theme = FlutterFlowTheme.of(context);
     return Scaffold(
       backgroundColor: theme.navy,
-      body: Stack(
-        fit: StackFit.expand,
+      body: Column(
         children: [
-          // Full-bleed pyramids photograph under a deep navy veil.
-          Positioned.fill(
-            child: Image.asset(
-              'assets/images/hero_pyramids.jpg',
-              fit: BoxFit.cover,
-              alignment: Alignment.center,
-            ),
-          ),
-          Positioned.fill(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    theme.navy.withValues(alpha: 0.88),
-                    theme.navy.withValues(alpha: 0.45),
-                    theme.navy.withValues(alpha: 0.90),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          // Centered brand block.
-          Center(
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: 120),
+          // Brand block on navy.
+          Expanded(
+            flex: 44,
+            child: Center(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(28),
+                  ClipOval(
                     child: Image.asset(
-                      'assets/images/app_icon_1024.png',
-                      width: 110,
-                      height: 110,
+                      'assets/images/oneway_logo_mark.jpg',
+                      width: 112,
+                      height: 112,
+                      fit: BoxFit.cover,
                     ),
                   ),
-                  const SizedBox(height: 20),
-                  Text(
-                    'ONEWAY',
-                    style: GoogleFonts.cairo(
-                      fontSize: 30,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.white,
-                      letterSpacing: 2,
+                  const SizedBox(height: 18),
+                  RichText(
+                    text: TextSpan(
+                      children: [
+                        TextSpan(
+                          text: 'ONE',
+                          style: GoogleFonts.cairo(
+                            fontSize: 38,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                            letterSpacing: 2,
+                          ),
+                        ),
+                        TextSpan(
+                          text: 'WAY',
+                          style: GoogleFonts.cairo(
+                            fontSize: 38,
+                            fontWeight: FontWeight.w800,
+                            color: theme.primary,
+                            letterSpacing: 2,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 8),
                   Text(
                     'اعرف المكان قبل ما تروح',
                     style: GoogleFonts.cairo(
-                      fontSize: 16,
-                      color: theme.gold,
+                      fontSize: 15,
                       fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 28),
-                  SizedBox(
-                    width: 26,
-                    height: 26,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2.5,
-                      color: theme.gold,
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  Text(
-                    'جاري التحميل...',
-                    style: GoogleFonts.cairo(
-                      fontSize: 13,
-                      color: Colors.white.withValues(alpha: 0.75),
+                      color: Colors.white.withValues(alpha: 0.85),
                     ),
                   ),
                 ],
               ),
             ),
           ),
+          // Illustrated Cairo band with a teal wave into the white sheet.
+          Expanded(
+            flex: 56,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                Image.asset(
+                  'assets/images/splash_hero_band.jpg',
+                  fit: BoxFit.cover,
+                  alignment: Alignment.center,
+                ),
+                Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ClipPath(
+                        clipper: _SplashWaveClipper(),
+                        child: Container(height: 26, color: theme.primary),
+                      ),
+                      Container(
+                        width: double.infinity,
+                        color: Colors.white,
+                        padding: const EdgeInsets.fromLTRB(24, 6, 24, 26),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            SizedBox(
+                              width: 26,
+                              height: 26,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.6,
+                                color: theme.primary,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              'جاري التحميل...',
+                              style: GoogleFonts.cairo(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: theme.navy,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
   }
+}
+
+/// Wavy top edge for the teal strip above the splash sheet.
+class _SplashWaveClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    final path = Path()..moveTo(0, size.height);
+    path.lineTo(0, size.height * 0.55);
+    path.quadraticBezierTo(
+        size.width * 0.25, 0, size.width * 0.5, size.height * 0.45);
+    path.quadraticBezierTo(
+        size.width * 0.75, size.height * 0.9, size.width, size.height * 0.3);
+    path.lineTo(size.width, size.height);
+    path.close();
+    return path;
+  }
+
+  @override
+  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
 }
 
 /// the authority for data access; this prevents an ordinary signed-in user
