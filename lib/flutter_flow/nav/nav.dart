@@ -128,7 +128,7 @@ GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
         FFRoute(
           name: HomeDashboardWidget.routeName,
           path: HomeDashboardWidget.routePath,
-          builder: (context, params) => const PlaceExplorerPage(),
+          builder: (context, params) => const HomeDashboardWidget(),
           requireAuth: true,
         ),
         FFRoute(
