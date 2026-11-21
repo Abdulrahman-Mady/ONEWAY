@@ -591,7 +591,7 @@ class _VoiceAssistantInterfaceWidgetState
                                     height: 118,
                                     decoration: BoxDecoration(
                                       shape: BoxShape.circle,
-                                      color: theme.primaryDark,
+                                      color: theme.navyLight,
                                       boxShadow: [
                                         BoxShadow(
                                           color: theme.primary
@@ -698,7 +698,7 @@ class _VoiceAssistantInterfaceWidgetState
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: theme.primaryDark,
+                        color: theme.navyLight,
                         borderRadius: const BorderRadius.vertical(
                           top: Radius.circular(24),
                         ),

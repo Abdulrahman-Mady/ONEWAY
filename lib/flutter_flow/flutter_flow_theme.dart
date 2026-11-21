@@ -214,9 +214,9 @@ class LightModeTheme extends FlutterFlowTheme {
   Color get tertiaryColor => tertiary;
 
   // Core Brand Colors - Modern Teal/Blue palette
-  late Color primary = const Color(0xFF006D77);       // Deep teal
+  late Color primary = const Color(0xFF16A6A0);       // Spec secondary teal
   late Color primaryLight = const Color(0xFF0096A3);  // Bright teal
-  late Color primaryDark = const Color(0xFF004D52);   // Dark teal
+  late Color primaryDark = const Color(0xFF0E7C77);   // Dark teal
   late Color secondary = const Color(0xFF83C5BE);     // Soft mint
   late Color secondaryLight = const Color(0xFFEDF6F9); // Very light mint
   late Color secondaryDark = const Color(0xFF52A39B); // Medium teal
@@ -224,10 +224,10 @@ class LightModeTheme extends FlutterFlowTheme {
   late Color tertiaryLight = const Color(0xFFFFD98A); // Light amber
   late Color tertiaryDark = const Color(0xFFE67E22);  // Dark amber
 
-  // ONEWAY redesign - deep navy dusk palette
-  late Color navy = const Color(0xFF0B2447);          // Deep navy (hero backgrounds)
-  late Color navyLight = const Color(0xFF143C6B);     // Lighter navy (cards on navy)
-  late Color navyDark = const Color(0xFF071A33);      // Darkest navy (vignettes)
+  // ONEWAY design-system spec palette
+  late Color navy = const Color(0xFF142B45);          // Spec primary navy
+  late Color navyLight = const Color(0xFF1E3A5C);     // Lighter navy (cards on navy)
+  late Color navyDark = const Color(0xFF0C1B2E);      // Darkest navy (vignettes)
   late Color gold = const Color(0xFFFFC24D);          // Sun gold accent
 
   // Surface Colors
@@ -236,8 +236,8 @@ class LightModeTheme extends FlutterFlowTheme {
   late Color surfaceContainer = const Color(0xFFE8EDEE);
   late Color surfaceContainerHigh = const Color(0xFFDEE3E4);
   late Color surfaceContainerHighest = const Color(0xFFD4D9DA);
-  late Color background = const Color(0xFFFAFCFC);
-  late Color onBackground = const Color(0xFF1A1C1E);
+  late Color background = const Color(0xFFF6F8FA);
+  late Color onBackground = const Color(0xFF172B3A);
 
   // Text Colors
   late Color onPrimary = const Color(0xFFFFFFFF);
@@ -246,25 +246,25 @@ class LightModeTheme extends FlutterFlowTheme {
   late Color onSecondaryContainer = const Color(0xFF002023);
   late Color onSurface = const Color(0xFF1A1C1E);
   late Color onSurfaceVariant = const Color(0xFF424748);
-  late Color primaryText = const Color(0xFF1A1C1E);
-  late Color secondaryText = const Color(0xFF4A4E50);
+  late Color primaryText = const Color(0xFF172B3A);
+  late Color secondaryText = const Color(0xFF687887);
   late Color tertiaryText = const Color(0xFF6B6F71);
   late Color hintText = const Color(0xFF909496);
 
   // State Colors
-  late Color success = const Color(0xFF007A33);
+  late Color success = const Color(0xFF16A36A);
   late Color successContainer = const Color(0xFFD1E7DD);
   late Color onSuccess = const Color(0xFFFFFFFF);
   late Color onSuccessContainer = const Color(0xFF00230B);
-  late Color warning = const Color(0xFF9A6700);
+  late Color warning = const Color(0xFFF59E0B);
   late Color warningContainer = const Color(0xFFFFF3D1);
   late Color onWarning = const Color(0xFFFFFFFF);
   late Color onWarningContainer = const Color(0xFF331D00);
-  late Color error = const Color(0xFFBA1A1A);
+  late Color error = const Color(0xFFE5484D);
   late Color errorContainer = const Color(0xFFFFDAD6);
   late Color onError = const Color(0xFFFFFFFF);
   late Color onErrorContainer = const Color(0xFF410002);
-  late Color info = const Color(0xFF006D77);
+  late Color info = const Color(0xFF16A6A0);
   late Color infoContainer = const Color(0xFFD1E9EB);
   late Color onInfo = const Color(0xFFFFFFFF);
   late Color onInfoContainer = const Color(0xFF002023);
