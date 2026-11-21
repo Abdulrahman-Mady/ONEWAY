@@ -141,7 +141,7 @@ class PlacesRecord extends FirestoreRecord {
     _businessId = snapshotData['business_id'] as String?;
   }
 
-  static CollectionReference get collection =>
+  static CollectionReference<Map<String, dynamic>> get collection =>
       FirebaseFirestore.instance.collection('places');
 
   static Stream<PlacesRecord> getDocument(DocumentReference ref) =>

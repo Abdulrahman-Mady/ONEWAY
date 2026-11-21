@@ -397,13 +397,17 @@ class _BusinessAdminDashboardWidgetState
                                     .limit(50)
                                     .snapshots(),
                                 builder: (ctx, repSnap) {
+                                  // Business owners cannot list every report
+                                  // (Firestore rules) - show their own count,
+                                  // admins/moderators still see the global one.
+                                  final denied = repSnap.hasError;
                                   final count =
                                       repSnap.hasData ? repSnap.data!.size : 0;
                                   return _MetricCard(
                                     icon: Icons.report_problem_outlined,
                                     color: theme.tertiary,
                                     label: 'بلاغات الإتاحة',
-                                    value: '$count بلاغات',
+                                    value: denied ? 'غير متاح' : '$count بلاغات',
                                     theme: theme,
                                   );
                                 },

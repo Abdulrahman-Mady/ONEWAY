@@ -71,7 +71,7 @@ class BusinessesRecord extends FirestoreRecord {
     _createdAt = snapshotData['created_at'] as DateTime?;
   }
 
-  static CollectionReference get collection =>
+  static CollectionReference<Map<String, dynamic>> get collection =>
       FirebaseFirestore.instance.collection('businesses');
 
   static Stream<BusinessesRecord> getDocument(DocumentReference ref) =>

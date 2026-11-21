@@ -59,7 +59,7 @@ class PlaceSubmissionsRecord extends FirestoreRecord {
     _createdAt = snapshotData['created_at'] as DateTime?;
   }
 
-  static CollectionReference get collection =>
+  static CollectionReference<Map<String, dynamic>> get collection =>
       FirebaseFirestore.instance.collection('placeSubmissions');
 
   static Stream<PlaceSubmissionsRecord> getDocument(DocumentReference ref) =>

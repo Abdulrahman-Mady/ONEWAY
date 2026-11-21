@@ -104,7 +104,7 @@ GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
       refreshListenable: appStateNotifier,
       navigatorKey: appNavigatorKey,
       errorBuilder: (context, state) => appStateNotifier.loggedIn
-          ? const SearchFiltersWidget()
+          ? const HomeDashboardWidget()
           : const AuthenticationWidget(),
       routes: [
         FFRoute(

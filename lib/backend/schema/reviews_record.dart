@@ -59,7 +59,7 @@ class ReviewsRecord extends FirestoreRecord {
     _createdAt = snapshotData['created_at'] as DateTime?;
   }
 
-  static CollectionReference get collection =>
+  static CollectionReference<Map<String, dynamic>> get collection =>
       FirebaseFirestore.instance.collection('reviews');
 
   static Stream<ReviewsRecord> getDocument(DocumentReference ref) =>

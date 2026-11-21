@@ -52,6 +52,35 @@ class _SubmitAccessibilityReportWidgetState
     super.dispose();
   }
 
+  void _showPhotosUnavailable(BuildContext context) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+            'رفع الصور سيتوفر قريباً بعد تفعيل خدمة التخزين.'),
+      ),
+    );
+  }
+
+  void _showReportHelp(BuildContext context, FlutterFlowTheme theme) {
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('كيف تكتب بلاغاً مفيداً؟'),
+        content: const Text(
+          'صف العائق بدقة: نوعه (منحدر مكسور، مدخل ضيق، مصعد معطل...)، '
+          'ومكانه بالتفصيل. كلما كان الوصف أوضح، تمكن فريق التحقق من '
+          'توثيقه أسرع وظهر للجميع على الخريطة.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('فهمت'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = FlutterFlowTheme.of(context);
@@ -105,7 +134,7 @@ class _SubmitAccessibilityReportWidgetState
                       _HeaderActionButton(
                         icon: Icons.help_outline_rounded,
                         iconColor: theme.onSurfaceVariant,
-                        onPressed: () {},
+                        onPressed: () => _showReportHelp(context, theme),
                         theme: theme,
                       ),
                     ],
@@ -216,24 +245,18 @@ class _SubmitAccessibilityReportWidgetState
                         children: [
                           _PhotoSlot(
                             label: 'صورة العائق',
-                            onTap: () {
-                              // TODO: Pick image
-                            },
+                            onTap: () => _showPhotosUnavailable(context),
                             theme: theme,
                           ),
                           const SizedBox(width: 16),
                           _PhotoSlot(
                             label: 'صورة القياس',
-                            onTap: () {
-                              // TODO: Pick image
-                            },
+                            onTap: () => _showPhotosUnavailable(context),
                             theme: theme,
                           ),
                           const SizedBox(width: 16),
                           _AddPhotoSlot(
-                            onTap: () {
-                              // TODO: Add more photos
-                            },
+                            onTap: () => _showPhotosUnavailable(context),
                             theme: theme,
                           ),
                         ],

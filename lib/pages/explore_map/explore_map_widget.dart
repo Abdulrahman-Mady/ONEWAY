@@ -163,9 +163,22 @@ class _ExploreMapWidgetState extends State<ExploreMapWidget>
                   .where('verification_status', isEqualTo: 'verified')
                   .snapshots(),
               builder: (context, snapshot) {
+                if (snapshot.hasError) {
+                  return Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Text(
+                        'تعذر تحميل الأماكن. تحقق من الاتصال ثم أعد المحاولة.',
+                        textAlign: TextAlign.center,
+                        style: FlutterFlowTheme.of(context).bodyMedium,
+                      ),
+                    ),
+                  );
+                }
                 final allPlaces = (snapshot.hasData)
                     ? snapshot.data!.docs
                         .map(PlacesRecord.fromSnapshot)
+                        .where((p) => p.location != null)
                         .toList()
                     : <PlacesRecord>[];
 

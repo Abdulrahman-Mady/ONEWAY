@@ -47,7 +47,7 @@ class AuditLogsRecord extends FirestoreRecord {
     _timestamp = snapshotData['timestamp'] as DateTime?;
   }
 
-  static CollectionReference get collection =>
+  static CollectionReference<Map<String, dynamic>> get collection =>
       FirebaseFirestore.instance.collection('auditLogs');
 
   static Stream<AuditLogsRecord> getDocument(DocumentReference ref) =>

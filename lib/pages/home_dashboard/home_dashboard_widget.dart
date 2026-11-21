@@ -1,4 +1,7 @@
 import '/auth/firebase_auth/auth_util.dart';
+import '/backend/schema/places_record.dart';
+import '/features/discovery/discovery_pages.dart' show PlaceDetailPage;
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '/components/bottom_nav/bottom_nav_widget.dart';
 import '/components/bottom_nav_child/bottom_nav_child_widget.dart';
 import '/components/button/button_widget.dart';
@@ -504,44 +507,42 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
         const SizedBox(height: 16),
         SizedBox(
           height: 280,
-          child: ListView(
-            scrollDirection: Axis.horizontal,
-            physics: const BouncingScrollPhysics(),
-            children: [
-              PlaceCardWidget(
-                category: 'مركز تسوق · ٦ أكتوبر',
-                distance: '١.٢ كم',
-                imageDesc:
-                    'https://dimg.dreamflow.cloud/v1/image/modern%20mall%20entrance%20with%20ramps',
-                name: 'مول العرب',
-                status: 'بيانات تجريبية',
-                verificationStatus: 'incomplete',
-                onTap: () => context.pushNamed(PlaceDetailsWidget.routeName),
-              ),
-              const SizedBox(width: 16),
-              PlaceCardWidget(
-                category: 'مطاعم · روض الفرج',
-                distance: '٣.٥ كم',
-                imageDesc:
-                    'https://dimg.dreamflow.cloud/v1/image/traditional%20restaurant%20with%20wide%20entrance',
-                name: 'مطعم صبحي كابر',
-                status: 'بيانات تجريبية',
-                verificationStatus: 'incomplete',
-                onTap: () => context.pushNamed(PlaceDetailsWidget.routeName),
-              ),
-              const SizedBox(width: 16),
-              PlaceCardWidget(
-                category: 'مستشفيات · مدينة نصر',
-                distance: '٤.٨ كم',
-                imageDesc:
-                    'https://dimg.dreamflow.cloud/v1/image/hospital%20entrance%20with%20automatic%20doors',
-                name: 'مستشفى دار الفؤاد',
-                status: 'بيانات تجريبية',
-                verificationStatus: 'incomplete',
-                onTap: () => context.pushNamed(PlaceDetailsWidget.routeName),
-              ),
-              const SizedBox(width: 24),
-            ],
+          child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+            stream: PlacesRecord.collection
+                .where('verification_status', isEqualTo: 'verified')
+                .limit(10)
+                .snapshots(),
+            builder: (context, snapshot) {
+              if (snapshot.hasError) {
+                return _NearbyHint(
+                  theme: theme,
+                  icon: Icons.cloud_off_rounded,
+                  text: 'تعذر تحميل الأماكن. تحقق من الاتصال ثم أعد المحاولة.',
+                );
+              }
+              if (!snapshot.hasData) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              final places = snapshot.data!.docs
+                  .map(PlacesRecord.fromSnapshot)
+                  .toList();
+              if (places.isEmpty) {
+                return _NearbyHint(
+                  theme: theme,
+                  icon: Icons.add_location_alt_rounded,
+                  text:
+                      'لا توجد أماكن موثقة بعد. كن أول من يشارك مكاناً يعرفه!',
+                );
+              }
+              return ListView.separated(
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                itemCount: places.length,
+                separatorBuilder: (_, __) => const SizedBox(width: 16),
+                itemBuilder: (context, i) =>
+                    _NearbyPlaceCard(place: places[i], theme: theme),
+              );
+            },
           ),
         ),
       ],
@@ -737,6 +738,154 @@ class _SearchBar extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+/// Empty/error placeholder for the nearby-places rail.
+class _NearbyHint extends StatelessWidget {
+  const _NearbyHint({
+    required this.theme,
+    required this.icon,
+    required this.text,
+  });
+
+  final FlutterFlowTheme theme;
+  final IconData icon;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: theme.surfaceVariant,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, size: 40, color: theme.secondaryText),
+          const SizedBox(height: 12),
+          Text(
+            text,
+            textAlign: TextAlign.center,
+            style: theme.bodyMedium.copyWith(
+              fontSize: 14,
+              color: theme.secondaryText,
+              height: 1.6,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Real nearby-place card backed by a verified PlacesRecord.
+class _NearbyPlaceCard extends StatelessWidget {
+  const _NearbyPlaceCard({required this.place, required this.theme});
+
+  final PlacesRecord place;
+  final FlutterFlowTheme theme;
+
+  @override
+  Widget build(BuildContext context) {
+    final features = place.accessibilityFeatures;
+    final subtitleParts = <String>[
+      if (place.category.isNotEmpty) place.category,
+      if (place.city.isNotEmpty) place.city else if (place.governorate.isNotEmpty) place.governorate,
+    ];
+    return Material(
+      color: theme.surface,
+      borderRadius: BorderRadius.circular(20),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: () => Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => PlaceDetailPage(place: place)),
+        ),
+        child: Container(
+          width: 220,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: theme.outlineVariant),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: theme.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(Icons.place_rounded, color: theme.primary),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                place.name.isEmpty ? 'مكان بدون اسم' : place.name,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: theme.titleSmall.copyWith(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: theme.primaryText,
+                ),
+              ),
+              const SizedBox(height: 4),
+              if (subtitleParts.isNotEmpty)
+                Text(
+                  subtitleParts.join(' · '),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.bodySmall.copyWith(
+                    fontSize: 12,
+                    color: theme.secondaryText,
+                  ),
+                ),
+              const Spacer(),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  if (features.hasRamp() && features.ramp)
+                    _MiniFeatureChip(label: 'منحدر', theme: theme),
+                  if (features.hasAccessibleRestroom() &&
+                      features.accessibleRestroom)
+                    _MiniFeatureChip(label: 'حمام مجهز', theme: theme),
+                  if (features.hasSuitableElevator() &&
+                      features.suitableElevator)
+                    _MiniFeatureChip(label: 'مصعد', theme: theme),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MiniFeatureChip extends StatelessWidget {
+  const _MiniFeatureChip({required this.label, required this.theme});
+
+  final String label;
+  final FlutterFlowTheme theme;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: theme.tertiaryLight,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        label,
+        style: theme.bodySmall.copyWith(fontSize: 11, color: theme.secondaryDark),
       ),
     );
   }

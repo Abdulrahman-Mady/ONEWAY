@@ -647,6 +647,16 @@ class _PlaceDetailPageState extends State<PlaceDetailPage> {
                   .where('status', isEqualTo: 'published')
                   .snapshots(),
               builder: (context, snapshot) {
+                if (snapshot.hasError) {
+                  return Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Text(
+                      'تعذر تحميل التقييمات حالياً.',
+                      textAlign: TextAlign.center,
+                      style: FlutterFlowTheme.of(context).bodySmall,
+                    ),
+                  );
+                }
                 if (!snapshot.hasData) {
                   return const Center(child: CircularProgressIndicator());
                 }
