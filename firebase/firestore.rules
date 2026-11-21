@@ -1,119 +1,286 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    function signedIn() { return request.auth != null; }
-    function isOwner(userId) { return signedIn() && request.auth.uid == userId; }
-    function currentRole() {
-      return signedIn()
-        ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role
-        : '';
-    }
-    function isModerator() { return currentRole() in ['moderator', 'admin', 'superAdmin']; }
-    function isAdmin() { return currentRole() in ['admin', 'superAdmin']; }
-    function hasOnlyKeys(keys) {
-      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(keys);
-    }
-    function hasCreateKeys(keys) {
-      return request.resource.data.keys().hasOnly(keys);
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
     }
 
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function getUserRole() {
+      return getUserData().role;
+    }
+
+    function isAdmin() {
+      return getUserRole() == 'admin' || getUserRole() == 'superAdmin';
+    }
+
+    function isModerator() {
+      return isAdmin() || getUserRole() == 'moderator';
+    }
+
+    function isBusinessOwner() {
+      return getUserRole() == 'businessOwner';
+    }
+
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    function isBusinessOwnerOf(businessId) {
+      return exists(/databases/$(database)/documents/businesses/$(businessId)) &&
+             get(/databases/$(database)/documents/businesses/$(businessId)).data.ownerId == request.auth.uid;
+    }
+
+    // Users collection
     match /users/{userId} {
-      allow create: if isOwner(userId)
-        && request.resource.data.uid == request.auth.uid
-        && request.resource.data.role == 'user'
-        && hasCreateKeys(['email', 'display_name', 'photo_url', 'uid', 'created_time', 'phone_number', 'role']);
-      allow read: if isOwner(userId) || isModerator();
-      allow update: if (isOwner(userId) && hasOnlyKeys(['display_name', 'photo_url', 'phone_number', 'preferred_language', 'accessibility_preferences', 'notification_preferences', 'updated_time', 'email'])
-        && request.resource.data.role == resource.data.role
-        && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['email']) || request.resource.data.email == request.auth.token.email)) || isAdmin();
-      allow delete: if isOwner(userId) || isAdmin();
+      // Users can read their own profile
+      allow read: if isSignedIn() && (isOwner(userId) || isAdmin() || isModerator());
+
+      // Users can create their own profile on signup
+      allow create: if isSignedIn() && isOwner(userId) &&
+        request.resource.data.keys().hasOnly([
+          'email', 'display_name', 'photo_url', 'uid', 'phone_number',
+          'role', 'created_time', 'updated_time', 'email_verified', 'phone_verified',
+          'gender', 'birth_date', 'address', 'business_application_id', 'business_application_status'
+        ]) &&
+        request.resource.data.role == 'user' &&
+        request.resource.data.uid == request.auth.uid;
+
+      // Users can update their own profile (except role)
+      allow update: if isSignedIn() && isOwner(userId) &&
+        !request.resource.data.keys().hasAny(['role', 'uid', 'created_time']) &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'display_name', 'phone_number', 'photo_url', 'email', 'updated_time',
+          'email_verified', 'phone_verified', 'gender', 'birth_date', 'address'
+        ]);
+
+      // Only admins can delete users
+      allow delete: if isAdmin();
     }
 
+    // Places collection - public read for verified places
     match /places/{placeId} {
-      allow read: if true;
-      allow create, update, delete: if isModerator();
-    }
-    match /placeSubmissions/{submissionId} {
-      allow create: if signedIn() && request.resource.data.submittedBy == request.auth.uid && request.resource.data.status == 'new'
-        && hasCreateKeys(['place_name', 'category', 'description', 'address', 'submittedBy', 'status', 'created_at']);
-      allow read: if signedIn() && (resource.data.submittedBy == request.auth.uid || isModerator());
-      allow update: if isModerator();
+      allow read: if isSignedIn() && (
+        resource.data.verification_status == 'verified' ||
+        isAdmin() || isModerator() ||
+        (isBusinessOwner() && isBusinessOwnerOf(placeId))
+      );
+
+      // Only admins/moderators can create places
+      allow create: if isAdmin() || isModerator();
+
+      // Only admins/moderators or business owner of the place can update
+      allow update: if isAdmin() || isModerator() ||
+        (isBusinessOwner() && isBusinessOwnerOf(placeId));
+
+      // Only admins can delete
       allow delete: if isAdmin();
     }
-    match /accessibilityReports/{reportId} {
-      allow create: if signedIn() && request.resource.data.createdBy == request.auth.uid && request.resource.data.status == 'new'
-        && hasCreateKeys(['place_id', 'place_name', 'createdBy', 'user_name', 'problemCategory', 'description', 'photo_urls', 'location', 'status', 'created_at']);
-      allow read: if signedIn() && (resource.data.createdBy == request.auth.uid || isModerator());
-      allow update: if isModerator();
-      allow delete: if isAdmin();
-    }
-    match /favorites/{favoriteId} {
-      allow create: if signedIn() && request.resource.data.userId == request.auth.uid
-        && hasCreateKeys(['userId', 'placeId', 'placeName', 'placePhoto', 'placeCategory', 'created_at']);
-      allow read, delete: if signedIn() && resource.data.userId == request.auth.uid;
-      allow update: if false;
-    }
-    match /reviews/{reviewId} {
-      allow read: if true;
-      allow create: if signedIn() && request.resource.data.createdBy == request.auth.uid && request.resource.data.status == 'published'
-        && request.resource.data.rating >= 1 && request.resource.data.rating <= 5
-        && hasCreateKeys(['place_id', 'createdBy', 'user_name', 'rating', 'comment', 'status', 'created_at']);
-      allow update: if (signedIn() && resource.data.createdBy == request.auth.uid
-        && request.resource.data.createdBy == resource.data.createdBy) || isModerator();
-      allow delete: if (signedIn() && resource.data.createdBy == request.auth.uid) || isModerator();
-    }
-    match /notifications/{notificationId} {
-      allow read: if signedIn() && resource.data.userId == request.auth.uid;
-      allow create: if signedIn() && (request.resource.data.userId == request.auth.uid || isAdmin());
-      allow update: if signedIn() && resource.data.userId == request.auth.uid
-        && hasOnlyKeys(['is_read']);
-      allow delete: if isAdmin();
-    }
+
+    // Businesses collection
     match /businesses/{businessId} {
-      allow read: if true;
-      allow create: if signedIn() && request.resource.data.ownerId == request.auth.uid && request.resource.data.status == 'pending';
-      allow update: if isModerator() || (signedIn()
-        && resource.data.ownerId == request.auth.uid
-        && request.resource.data.ownerId == resource.data.ownerId
-        && request.resource.data.status == resource.data.status
-        && request.resource.data.subscription_tier == resource.data.subscription_tier
-        && hasOnlyKeys(['business_name', 'category', 'phone_number', 'email', 'updated_at']));
+      // Business owner can read their own business
+      // Admins/moderators can read all
+      allow read: if isSignedIn() && (
+        isAdmin() || isModerator() ||
+        (isBusinessOwner() && isBusinessOwnerOf(businessId))
+      );
+
+      // Only business owners can create business applications (status: pending)
+      allow create: if isSignedIn() &&
+        request.resource.data.ownerId == request.auth.uid &&
+        request.resource.data.status == 'pending' &&
+        request.resource.data.subscription_tier == 'free';
+
+      // Business owner can update their business (except status)
+      // Admins/moderators can update status
+      allow update: if isSignedIn() && (
+        (isBusinessOwner() && isBusinessOwnerOf(businessId) &&
+         !request.resource.data.keys().hasAny(['status', 'ownerId', 'created_at'])) ||
+        (isAdmin() || isModerator())
+      );
+
+      // Only admins can delete
       allow delete: if isAdmin();
     }
-    match /emergencyContacts/{contactId} {
-      allow create: if signedIn() && request.resource.data.userId == request.auth.uid
-        && hasCreateKeys(['userId', 'name', 'relationship', 'phone_number', 'is_primary', 'created_at']);
-      allow read, delete: if signedIn() && resource.data.userId == request.auth.uid;
-      allow update: if signedIn() && resource.data.userId == request.auth.uid
-        && request.resource.data.userId == resource.data.userId;
+
+    // Accessibility Reports
+    match /accessibilityReports/{reportId} {
+      // Users can read their own reports, admins/moderators read all
+      allow read: if isSignedIn() && (
+        isAdmin() || isModerator() ||
+        resource.data.createdBy == request.auth.uid
+      );
+
+      // Users can create reports
+      allow create: if isSignedIn() &&
+        request.resource.data.createdBy == request.auth.uid &&
+        request.resource.data.status == 'new';
+
+      // Only admins/moderators can update status
+      allow update: if isSignedIn() && (
+        (isAdmin() || isModerator() &&
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'admin_notes', 'updated_at'])) ||
+        (resource.data.createdBy == request.auth.uid &&
+         request.resource.data.status == 'new' &&
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['description', 'photo_urls']))
+      );
+
+      // Only admins can delete
+      allow delete: if isAdmin();
     }
+
+    // Reviews
+    match /reviews/{reviewId} {
+      // Public read for published reviews
+      allow read: if isSignedIn() && (
+        resource.data.status == 'published' ||
+        resource.data.createdBy == request.auth.uid ||
+        isAdmin() || isModerator()
+      );
+
+      // Users can create reviews
+      allow create: if isSignedIn() &&
+        request.resource.data.createdBy == request.auth.uid &&
+        request.resource.data.status == 'published' &&
+        request.resource.data.rating >= 1.0 && request.resource.data.rating <= 5.0;
+
+      // Users can update their own reviews (before moderation)
+      // Admins/moderators can update status
+      allow update: if isSignedIn() && (
+        (resource.data.createdBy == request.auth.uid &&
+         resource.data.status == 'published' &&
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['rating', 'comment', 'updated_at'])) ||
+        (isAdmin() || isModerator())
+      );
+
+      // Only admins can delete
+      allow delete: if isAdmin();
+    }
+
+    // Favorites
+    match /favorites/{favoriteId} {
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    // Notifications
+    match /notifications/{notificationId} {
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow update: if isSignedIn() && resource.data.userId == request.auth.uid &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['is_read']);
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    // Emergency Contacts
+    match /emergencyContacts/{contactId} {
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    // Audit Logs - Admin only
     match /auditLogs/{logId} {
       allow read: if isAdmin();
+      allow write: if false; // Only backend can write
+    }
+
+    // Admin Notifications - Admin only
+    match /admin_notifications/{notificationId} {
+      allow read: if isAdmin() || isModerator();
+      allow write: if false; // Only backend can write
+    }
+
+    // Field Assessment Requests
+    match /field_assessment_requests/{requestId} {
+      allow read: if isSignedIn() && (
+        isAdmin() || isModerator() ||
+        resource.data.owner_id == request.auth.uid
+      );
+      allow create: if isSignedIn() &&
+        request.resource.data.owner_id == request.auth.uid &&
+        request.resource.data.status == 'pending';
+      allow update: if isAdmin() || isModerator();
+    }
+
+    // Business Applications (pending applications)
+    match /business_applications/{appId} {
+      allow read: if isSignedIn() && (
+        isAdmin() || isModerator() ||
+        resource.data.owner_id == request.auth.uid
+      );
+      // Creation handled via businesses collection with status: pending
       allow write: if false;
     }
-    match /routeReports/{reportId} {
-      allow create: if signedIn() && request.resource.data.createdBy == request.auth.uid
-        && request.resource.data.status == 'new';
-      allow read: if signedIn() && (resource.data.createdBy == request.auth.uid || isModerator());
+
+    // Place Submissions (users propose new accessible places)
+    match /placeSubmissions/{submissionId} {
+      allow create: if isSignedIn() &&
+        request.resource.data.submittedBy == request.auth.uid &&
+        request.resource.data.status == 'new' &&
+        request.resource.data.keys().hasOnly([
+          'place_name', 'category', 'description', 'address',
+          'submittedBy', 'status', 'created_at'
+        ]);
+      allow read: if isSignedIn() && (
+        resource.data.submittedBy == request.auth.uid || isModerator()
+      );
       allow update: if isModerator();
       allow delete: if isAdmin();
     }
+
+    // Route Reports (wheelchair route feedback)
+    match /routeReports/{reportId} {
+      allow create: if isSignedIn() &&
+        request.resource.data.createdBy == request.auth.uid &&
+        request.resource.data.status == 'new';
+      allow read: if isSignedIn() && (
+        resource.data.createdBy == request.auth.uid || isModerator()
+      );
+      allow update: if isModerator();
+      allow delete: if isAdmin();
+    }
+
+    // Conversations and their messages (user <-> business/assistant chat)
     match /conversations/{conversationId} {
-      allow create: if signedIn() && request.resource.data.createdBy == request.auth.uid
-        && request.auth.uid in request.resource.data.participantIds;
-      allow read: if signedIn() && request.auth.uid in resource.data.participantIds;
-      allow update: if signedIn() && request.auth.uid in resource.data.participantIds
-        && request.resource.data.participantIds == resource.data.participantIds;
+      allow create: if isSignedIn() &&
+        request.resource.data.createdBy == request.auth.uid &&
+        request.auth.uid in request.resource.data.participantIds;
+      allow read: if isSignedIn() &&
+        request.auth.uid in resource.data.participantIds;
+      allow update: if isSignedIn() &&
+        request.auth.uid in resource.data.participantIds &&
+        request.resource.data.participantIds == resource.data.participantIds;
+
       match /messages/{messageId} {
-        allow read: if signedIn() && request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.participantIds;
-        allow create: if signedIn() && request.resource.data.senderId == request.auth.uid
-          && request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.participantIds;
+        allow read: if isSignedIn() && request.auth.uid in
+          get(/databases/$(database)/documents/conversations/$(conversationId)).data.participantIds;
+        allow create: if isSignedIn() &&
+          request.resource.data.senderId == request.auth.uid &&
+          request.auth.uid in
+            get(/databases/$(database)/documents/conversations/$(conversationId)).data.participantIds;
         allow update, delete: if false;
       }
     }
+
+    // Subscriptions - read by owner or admin; written by backend only
     match /subscriptions/{subscriptionId} {
-      allow read: if signedIn() && resource.data.ownerId == request.auth.uid || isAdmin();
+      allow read: if isSignedIn() && (
+        resource.data.ownerId == request.auth.uid || isAdmin()
+      );
       allow write: if false;
+    }
+
+    // Default deny for any other collections
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }
