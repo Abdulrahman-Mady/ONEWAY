@@ -1,6 +1,3 @@
-import '/components/button/button_widget.dart';
-import '/components/dot/dot_widget.dart';
-import '/components/onboarding_slide/onboarding_slide_widget.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/nav/nav.dart';
@@ -90,6 +87,21 @@ class _SplashOnboardingWidgetState extends State<SplashOnboardingWidget>
     _markSeenAndContinue();
   }
 
+  static const _slides = <(String, String)>[
+    (
+      'اعرف المكان قبل ما تروح',
+      'استكشف المطاعم، المستشفيات، والمراكز التجارية المجهزة لاستقبالك بكل سهولة.',
+    ),
+    (
+      'فلاتر ذكية للإتاحة',
+      'اختر ما يناسبك: منحدر، مصعد مجهز، حمام مناسب، موقف سيارات، والمزيد.',
+    ),
+    (
+      'مجتمع يشارك الخبرات',
+      'أضف تقييمك، أبلغ عن عائق، وساعد الآخرين في اتخاذ قرارات أفضل.',
+    ),
+  ];
+
   @override
   Widget build(BuildContext context) {
     final theme = FlutterFlowTheme.of(context);
@@ -101,140 +113,168 @@ class _SplashOnboardingWidgetState extends State<SplashOnboardingWidget>
       },
       child: Scaffold(
         key: scaffoldKey,
-        backgroundColor: theme.background,
+        backgroundColor: theme.navy,
         body: FadeTransition(
           opacity: _fadeAnimation,
           child: SlideTransition(
             position: _slideAnimation,
-            child: Stack(
+            child: Column(
               children: [
-                // Decorative background element
-                Positioned(
-                  top: -150,
-                  right: -150,
-                  child: Container(
-                    width: 300,
-                    height: 300,
-                    decoration: BoxDecoration(
-                      color: theme.primary.withValues(alpha: 0.05),
-                      borderRadius: const BorderRadius.only(
-                        bottomLeft: Radius.circular(300),
-                      ),
-                    ),
-                  ),
-                ),
-                // Main content
-                SafeArea(
-                  child: Column(
+                // Top: full-bleed Cairo hero with the wheelchair traveler.
+                Expanded(
+                  flex: 52,
+                  child: Stack(
+                    fit: StackFit.expand,
                     children: [
-                      // Skip button
-                      Padding(
-                        padding: const EdgeInsets.all(24),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            TextButton(
+                      Image.asset(
+                        'assets/images/onboarding_hero.png',
+                        fit: BoxFit.cover,
+                        alignment: Alignment.topCenter,
+                      ),
+                      // Fade into the sheet color at the bottom.
+                      Positioned(
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        height: 70,
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                theme.navy.withValues(alpha: 0),
+                                theme.navy,
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      SafeArea(
+                        child: Align(
+                          alignment: AlignmentDirectional.topEnd,
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: TextButton(
                               onPressed: _skipOnboarding,
+                              style: TextButton.styleFrom(
+                                backgroundColor:
+                                    Colors.black.withValues(alpha: 0.3),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 6,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                              ),
                               child: Text(
                                 'تخطي',
                                 style: theme.labelLarge.copyWith(
-                                  fontSize: 15,
+                                  fontSize: 14,
                                   fontWeight: FontWeight.w600,
-                                  color: theme.onSurfaceVariant,
+                                  color: Colors.white,
                                 ),
                               ),
                             ),
-                          ],
-                        ),
-                      ),
-                      // Page view
-                      Expanded(
-                        child: PageView(
-                          controller: _pageController,
-                          onPageChanged: (index) {
-                            safeSetState(() => _currentPage = index);
-                          },
-                          children: const [
-                            OnboardingSlideWidget(
-                              title: 'اعرف المكان قبل ما تروح',
-                              desc:
-                                  'استكشف المطاعم، المستشفيات، والمراكز التجارية المجهزة لاستقبالك بكل سهولة.',
-                              icon: Icons.accessible_forward_rounded,
-                            ),
-                            OnboardingSlideWidget(
-                              title: 'فلاتر ذكية للإتاحة',
-                              desc:
-                                  'اختر ما يناسبك: منحدر، مصعد مجهز، حمام مناسب، موقف سيارات، والمزيد.',
-                              icon: Icons.tune_rounded,
-                            ),
-                            OnboardingSlideWidget(
-                              title: 'مجتمع يشارك الخبرات',
-                              desc:
-                                  'أضف تقييمك، أبلغ عن عائق، وساعد الآخرين في اتخاذ قرارات أفضل.',
-                              icon: Icons.diversity_1_rounded,
-                            ),
-                          ],
-                        ),
-                      ),
-                      // Bottom section
-                      Container(
-                        decoration: BoxDecoration(
-                          color: theme.surface,
-                          borderRadius: const BorderRadius.vertical(
-                            top: Radius.circular(32),
                           ),
-                          boxShadow: [
-                            BoxShadow(
-                              blurRadius: 20,
-                              color: theme.shadow.withValues(alpha: 0.1),
-                              offset: const Offset(0, -4),
-                              spreadRadius: 0,
-                            ),
-                          ],
-                        ),
-                        padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            // Page indicators
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: List.generate(3, (index) {
-                                return DotWidget(
-                                  currentIndex: _currentPage,
-                                  index: index,
-                                );
-                              }),
-                            ),
-                            const SizedBox(height: 32),
-                            // Next/Get Started button
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: ButtonWidget(
-                                    content: _currentPage == 2
-                                        ? 'ابدأ الآن'
-                                        : 'التالي',
-                                    variant: 'primary',
-                                    size: 'large',
-                                    fullWidth: true,
-                                    iconEnd: Icon(
-                                      _currentPage == 2
-                                          ? Icons.arrow_forward_rounded
-                                          : Icons.arrow_forward_rounded,
-                                      color: theme.onPrimary,
-                                      size: 24,
-                                    ),
-                                    iconEndPresent: true,
-                                    onPressed: _nextPage,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
                         ),
                       ),
                     ],
+                  ),
+                ),
+                // Bottom: navy sheet with slide copy, dots and action.
+                Expanded(
+                  flex: 48,
+                  child: Container(
+                    color: theme.navy,
+                    padding: const EdgeInsets.fromLTRB(24, 0, 24, 28),
+                    child: Column(
+                      children: [
+                        Expanded(
+                          child: PageView.builder(
+                            controller: _pageController,
+                            itemCount: _slides.length,
+                            onPageChanged: (index) {
+                              safeSetState(() => _currentPage = index);
+                            },
+                            itemBuilder: (context, index) {
+                              final (title, desc) = _slides[index];
+                              return Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    title,
+                                    textAlign: TextAlign.center,
+                                    style: theme.headlineSmall.copyWith(
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.w800,
+                                      color: Colors.white,
+                                      height: 1.35,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 14),
+                                  Text(
+                                    desc,
+                                    textAlign: TextAlign.center,
+                                    style: theme.bodyLarge.copyWith(
+                                      fontSize: 15,
+                                      color: Colors.white
+                                          .withValues(alpha: 0.78),
+                                      height: 1.7,
+                                    ),
+                                  ),
+                                ],
+                              );
+                            },
+                          ),
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: List.generate(_slides.length, (index) {
+                            final active = _currentPage == index;
+                            return AnimatedContainer(
+                              duration: const Duration(milliseconds: 250),
+                              margin:
+                                  const EdgeInsets.symmetric(horizontal: 4),
+                              width: active ? 26 : 8,
+                              height: 8,
+                              decoration: BoxDecoration(
+                                color: active
+                                    ? theme.gold
+                                    : Colors.white.withValues(alpha: 0.3),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                            );
+                          }),
+                        ),
+                        const SizedBox(height: 24),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: _nextPage,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: theme.primary,
+                              foregroundColor: Colors.white,
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              elevation: 0,
+                            ),
+                            child: Text(
+                              _currentPage == 2 ? 'ابدأ الآن' : 'التالي',
+                              style: theme.titleMedium.copyWith(
+                                fontSize: 17,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],
