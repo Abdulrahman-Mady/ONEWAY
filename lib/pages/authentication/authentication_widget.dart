@@ -150,19 +150,32 @@ class _AuthenticationWidgetState extends State<AuthenticationWidget>
         child: Stack(
           alignment: Alignment.topCenter,
           children: [
-            // Cairo skyline art, anchored low so it frames the header.
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
+            // Cairo skyline art fills the header; navy scrim keeps the
+            // brand lockup readable over it.
+            Positioned.fill(
               child: Image.asset(
                 'assets/images/hero_cairo.png',
-                fit: BoxFit.fitWidth,
-                alignment: Alignment.bottomCenter,
+                fit: BoxFit.cover,
+                alignment: const Alignment(0, 0.35),
+              ),
+            ),
+            Positioned.fill(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      theme.navy.withValues(alpha: 0.85),
+                      theme.navy.withValues(alpha: 0.30),
+                      theme.navy.withValues(alpha: 0.75),
+                    ],
+                  ),
+                ),
               ),
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(24, 32, 24, 100),
+              padding: const EdgeInsets.fromLTRB(24, 30, 24, 36),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 mainAxisSize: MainAxisSize.min,
