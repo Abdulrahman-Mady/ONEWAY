@@ -3,6 +3,7 @@ import '/flutter_flow/flutter_flow_util.dart';
 import '/flutter_flow/nav/nav.dart';
 import '/index.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'splash_onboarding_model.dart';
 export 'splash_onboarding_model.dart';
@@ -73,7 +74,7 @@ class _SplashOnboardingWidgetState extends State<SplashOnboardingWidget>
   }
 
   void _nextPage() {
-    if (_currentPage < 2) {
+    if (_currentPage < _slides.length - 1) {
       _pageController.nextPage(
         duration: const Duration(milliseconds: 400),
         curve: Curves.easeOutCubic,
@@ -89,8 +90,8 @@ class _SplashOnboardingWidgetState extends State<SplashOnboardingWidget>
 
   static const _slides = <(String, String)>[
     (
-      'اعرف المكان قبل ما تروح',
-      'استكشف المطاعم، المستشفيات، والمراكز التجارية المجهزة لاستقبالك بكل سهولة.',
+      'مصر بدون عوائق',
+      'دليلك الذكي للوصول إلى الأماكن المهيأة لذوي الإعاقة وكبار السن',
     ),
     (
       'فلاتر ذكية للإتاحة',
@@ -113,168 +114,199 @@ class _SplashOnboardingWidgetState extends State<SplashOnboardingWidget>
       },
       child: Scaffold(
         key: scaffoldKey,
-        backgroundColor: theme.navy,
+        backgroundColor: theme.background,
         body: FadeTransition(
           opacity: _fadeAnimation,
           child: SlideTransition(
             position: _slideAnimation,
             child: Column(
               children: [
-                // Top: full-bleed Cairo hero with the wheelchair traveler.
+                // Brand row on the light canvas.
+                SafeArea(
+                  bottom: false,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 14, 20, 10),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        ClipOval(
+                          child: Image.asset(
+                            'assets/images/oneway_logo_mark.jpg',
+                            width: 38,
+                            height: 38,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        RichText(
+                          text: TextSpan(
+                            children: [
+                              TextSpan(
+                                text: 'ONE',
+                                style: GoogleFonts.cairo(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w800,
+                                  color: theme.navy,
+                                  letterSpacing: 1.5,
+                                ),
+                              ),
+                              TextSpan(
+                                text: 'WAY',
+                                style: GoogleFonts.cairo(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w800,
+                                  color: theme.primary,
+                                  letterSpacing: 1.5,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                // Illustrated hero: wheelchair traveler facing Cairo.
                 Expanded(
-                  flex: 52,
+                  flex: 46,
+                  child: Image.asset(
+                    'assets/images/onboarding_hero.jpg',
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    alignment: Alignment.center,
+                  ),
+                ),
+                // Teal wave separating the art from the white sheet.
+                ClipPath(
+                  clipper: _OnboardingWaveClipper(),
+                  child: Container(height: 24, color: theme.primary),
+                ),
+                // White sheet: slide copy, dots, teal CTA, skip.
+                Expanded(
+                  flex: 54,
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
-                      Image.asset(
-                        'assets/images/onboarding_wheelchair.jpg',
-                        fit: BoxFit.cover,
-                        alignment: Alignment.center,
-                      ),
-                      // Fade into the sheet color at the bottom.
-                      Positioned(
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        height: 70,
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [
-                                theme.navy.withValues(alpha: 0),
-                                theme.navy,
-                              ],
+                      Container(color: Colors.white),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(24, 40, 24, 20),
+                        child: Column(
+                          children: [
+                            Expanded(
+                              child: PageView.builder(
+                                controller: _pageController,
+                                itemCount: _slides.length,
+                                onPageChanged: (index) {
+                                  safeSetState(() => _currentPage = index);
+                                },
+                                itemBuilder: (context, index) {
+                                  final (title, desc) = _slides[index];
+                                  return Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text(
+                                        title,
+                                        textAlign: TextAlign.center,
+                                        style: theme.headlineSmall.copyWith(
+                                          fontSize: 24,
+                                          fontWeight: FontWeight.w800,
+                                          color: theme.navy,
+                                          height: 1.35,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 12),
+                                      Text(
+                                        desc,
+                                        textAlign: TextAlign.center,
+                                        style: theme.bodyLarge.copyWith(
+                                          fontSize: 15,
+                                          color: theme.secondaryText,
+                                          height: 1.7,
+                                        ),
+                                      ),
+                                    ],
+                                  );
+                                },
+                              ),
                             ),
-                          ),
-                        ),
-                      ),
-                      SafeArea(
-                        child: Align(
-                          alignment: AlignmentDirectional.topEnd,
-                          child: Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: TextButton(
-                              onPressed: _skipOnboarding,
-                              style: TextButton.styleFrom(
-                                backgroundColor:
-                                    Colors.black.withValues(alpha: 0.3),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 6,
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children:
+                                  List.generate(_slides.length, (index) {
+                                final active = _currentPage == index;
+                                return AnimatedContainer(
+                                  duration: const Duration(milliseconds: 250),
+                                  margin: const EdgeInsets.symmetric(
+                                      horizontal: 4),
+                                  width: active ? 24 : 8,
+                                  height: 8,
+                                  decoration: BoxDecoration(
+                                    color: active
+                                        ? theme.primary
+                                        : theme.secondaryText
+                                            .withValues(alpha: 0.25),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                );
+                              }),
+                            ),
+                            const SizedBox(height: 22),
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton(
+                                onPressed: _nextPage,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: theme.primary,
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(
+                                      vertical: 16),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  elevation: 0,
                                 ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(20),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      _currentPage == _slides.length - 1
+                                          ? 'ابدأ الآن'
+                                          : 'التالي',
+                                      style: theme.titleMedium.copyWith(
+                                        fontSize: 17,
+                                        fontWeight: FontWeight.w700,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    if (_currentPage < _slides.length - 1) ...[
+                                      const SizedBox(width: 8),
+                                      const Icon(
+                                        Icons.arrow_back,
+                                        size: 20,
+                                        color: Colors.white,
+                                      ),
+                                    ],
+                                  ],
                                 ),
                               ),
+                            ),
+                            const SizedBox(height: 6),
+                            TextButton(
+                              onPressed: _skipOnboarding,
                               child: Text(
                                 'تخطي',
                                 style: theme.labelLarge.copyWith(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
-                                  color: Colors.white,
+                                  color: theme.secondaryText,
                                 ),
                               ),
                             ),
-                          ),
+                          ],
                         ),
                       ),
                     ],
-                  ),
-                ),
-                // Bottom: navy sheet with slide copy, dots and action.
-                Expanded(
-                  flex: 48,
-                  child: Container(
-                    color: theme.navy,
-                    padding: const EdgeInsets.fromLTRB(24, 0, 24, 28),
-                    child: Column(
-                      children: [
-                        Expanded(
-                          child: PageView.builder(
-                            controller: _pageController,
-                            itemCount: _slides.length,
-                            onPageChanged: (index) {
-                              safeSetState(() => _currentPage = index);
-                            },
-                            itemBuilder: (context, index) {
-                              final (title, desc) = _slides[index];
-                              return Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    title,
-                                    textAlign: TextAlign.center,
-                                    style: theme.headlineSmall.copyWith(
-                                      fontSize: 24,
-                                      fontWeight: FontWeight.w800,
-                                      color: Colors.white,
-                                      height: 1.35,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 14),
-                                  Text(
-                                    desc,
-                                    textAlign: TextAlign.center,
-                                    style: theme.bodyLarge.copyWith(
-                                      fontSize: 15,
-                                      color: Colors.white
-                                          .withValues(alpha: 0.78),
-                                      height: 1.7,
-                                    ),
-                                  ),
-                                ],
-                              );
-                            },
-                          ),
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: List.generate(_slides.length, (index) {
-                            final active = _currentPage == index;
-                            return AnimatedContainer(
-                              duration: const Duration(milliseconds: 250),
-                              margin:
-                                  const EdgeInsets.symmetric(horizontal: 4),
-                              width: active ? 26 : 8,
-                              height: 8,
-                              decoration: BoxDecoration(
-                                color: active
-                                    ? theme.gold
-                                    : Colors.white.withValues(alpha: 0.3),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                            );
-                          }),
-                        ),
-                        const SizedBox(height: 24),
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            onPressed: _nextPage,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: theme.primary,
-                              foregroundColor: Colors.white,
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 16),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              elevation: 0,
-                            ),
-                            child: Text(
-                              _currentPage == 2 ? 'ابدأ الآن' : 'التالي',
-                              style: theme.titleMedium.copyWith(
-                                fontSize: 17,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
                   ),
                 ),
               ],
@@ -284,4 +316,23 @@ class _SplashOnboardingWidgetState extends State<SplashOnboardingWidget>
       ),
     );
   }
+}
+
+/// Wavy top edge for the teal strip above the onboarding sheet.
+class _OnboardingWaveClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    final path = Path()..moveTo(0, 0);
+    path.lineTo(0, size.height * 0.6);
+    path.quadraticBezierTo(
+        size.width * 0.25, size.height, size.width * 0.5, size.height * 0.55);
+    path.quadraticBezierTo(
+        size.width * 0.75, size.height * 0.1, size.width, size.height * 0.5);
+    path.lineTo(size.width, 0);
+    path.close();
+    return path;
+  }
+
+  @override
+  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
 }
