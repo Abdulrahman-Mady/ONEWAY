@@ -8,6 +8,7 @@ import '/backend/backend.dart';
 import '/backend/schema/structs/index.dart';
 
 import '/auth/firebase_auth/auth_util.dart';
+import '/auth/firebase_auth/firebase_user_provider.dart';
 
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
@@ -472,9 +473,25 @@ class _LaunchGateState extends State<_LaunchGate> {
           );
         }
         if (snapshot.data == false) return const SplashOnboardingWidget();
-        return widget.loggedIn
-            ? const HomeDashboardWidget()
-            : const AuthenticationWidget();
+        // Wait for Firebase Auth to restore a persisted session before
+        // choosing home vs. sign-in; otherwise a web reload lands on the
+        // login page even with a live session (widget.loggedIn is captured
+        // at router build time, before the restore completes).
+        return StreamBuilder<BaseAuthUser>(
+          stream: oneWayEgyptFirebaseUserStream(),
+          builder: (context, authSnapshot) {
+            if (authSnapshot.connectionState == ConnectionState.waiting &&
+                currentUser == null) {
+              return Scaffold(
+                backgroundColor: FlutterFlowTheme.of(context).background,
+                body: const Center(child: CircularProgressIndicator()),
+              );
+            }
+            return (currentUser?.loggedIn ?? widget.loggedIn)
+                ? const HomeDashboardWidget()
+                : const AuthenticationWidget();
+          },
+        );
       },
     );
   }
