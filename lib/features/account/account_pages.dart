@@ -293,14 +293,12 @@ class _EmergencyContactsPageState extends State<EmergencyContactsPage> {
                   .map(EmergencyContactsRecord.fromSnapshot)
                   .toList();
 
-              final primaryContact = contacts.firstWhere(
-                (c) => c.isPrimary,
-                orElse: () => contacts.isNotEmpty
-                    ? contacts.first
-                    : EmergencyContactsRecord.fromSnapshot(
-                        snapshot.data!.docs.firstOrNull ??
-                            snapshot.data!.docs.first),
-              );
+              final primaryContact = contacts.isEmpty
+                  ? null
+                  : contacts.firstWhere(
+                      (c) => c.isPrimary,
+                      orElse: () => contacts.first,
+                    );
 
               return ListView(
                 padding: const EdgeInsets.all(16),
@@ -336,7 +334,7 @@ class _EmergencyContactsPageState extends State<EmergencyContactsPage> {
                           const SizedBox(height: 8),
                           Text(
                             contacts.isNotEmpty
-                                ? 'سيتم إرسال إحداثيات موقعك الجغرافي الحي مباشرة عبر رسالة واتساب وSMS إلى مرافقك: ${primaryContact.name} (${primaryContact.phoneNumber}).'
+                                ? 'سيتم إرسال إحداثيات موقعك الجغرافي الحي مباشرة عبر رسالة واتساب وSMS إلى مرافقك: ${primaryContact!.name} (${primaryContact.phoneNumber}).'
                                 : 'يرجى إضافة جهة اتصال واحدة على الأقل بالأسفل لتفعيل نداء الاستغاثة وإرسال موقعك عند الطوارئ.',
                             style: const TextStyle(fontSize: 14, height: 1.4),
                           ),

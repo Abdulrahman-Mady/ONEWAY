@@ -181,7 +181,7 @@ GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
         FFRoute(
           name: EmergencySOSWidget.routeName,
           path: EmergencySOSWidget.routePath,
-          builder: (context, params) => const EmergencyContactsPage(),
+          builder: (context, params) => const EmergencySOSWidget(),
           requireAuth: true,
         ),
         FFRoute(
