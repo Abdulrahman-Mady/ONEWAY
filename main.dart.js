@@ -40741,7 +40741,7 @@ s=1
 break}b="\ud83d\udea8 \u0646\u062f\u0627\u0621 \u0627\u0633\u062a\u063a\u0627\u062b\u0629 \u0639\u0627\u062c\u0644 \u0645\u0646 "+d+" \u0639\u0628\u0631 \u062a\u0637\u0628\u064a\u0642 ONEWAY!\n\u0623\u0646\u0627 \u0628\u062d\u0627\u062c\u0629 \u0625\u0644\u0649 \u0645\u0633\u0627\u0639\u062f\u0629 \u0639\u0627\u062c\u0644\u0629.\n\u0645\u0648\u0642\u0639\u064a \u0627\u0644\u062d\u0627\u0644\u064a \u0639\u0644\u0649 \u0627\u0644\u062e\u0631\u064a\u0637\u0629:\n"+c+"\n\u0627\u0644\u0648\u0642\u062a: "+g[0]
 if(J.bN8(n,"01"))a="2"+A.x(n)
 else a=A.dP(n,"+","")
-l=A.e2("whatsapp://send?phone="+a+"&text="+A.ot(2,b,B.as,!1),0,null)
+l=A.e2("https://wa.me/"+a+"?text="+A.ot(2,b,B.as,!1),0,null)
 g=t.N
 f=t.z
 k=A.nb(null,n,A.R(["body",b],g,f),"sms")
@@ -144643,7 +144643,7 @@ var $async$GH=A.r(function(c,d){if(c===1){o.push(d)
 s=p}for(;;)switch(s){case 0:p=4
 if(B.c.aA(a).length===0){q=new A.fc(!1,"\u0627\u0644\u0628\u0631\u064a\u062f \u0627\u0644\u0625\u0644\u0643\u062a\u0631\u0648\u0646\u064a \u0645\u0637\u0644\u0648\u0628")
 s=1
-break}j=A.bK("^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$",!0,!1)
+break}j=A.bK("^[\\w.+-]+@([\\w-]+\\.)+[\\w-]{2,4}$",!0,!1)
 if(!j.b.test(a)){q=new A.fc(!1,"\u0628\u0631\u064a\u062f \u0625\u0644\u0643\u062a\u0631\u0648\u0646\u064a \u063a\u064a\u0631 \u0635\u0627\u0644\u062d")
 s=1
 break}m=B.f.k(1e5+B.f.az(Date.now(),9e5))
@@ -149308,7 +149308,7 @@ A.b8r.prototype={
 $1(a){var s,r
 if(a==null||B.c.aA(a).length===0)return"\u0627\u0644\u0628\u0631\u064a\u062f \u0627\u0644\u0625\u0644\u0643\u062a\u0631\u0648\u0646\u064a \u0645\u0637\u0644\u0648\u0628"
 s=B.c.aA(a)
-r=A.bK("^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$",!0,!1)
+r=A.bK("^[\\w.+-]+@([\\w-]+\\.)+[\\w-]{2,4}$",!0,!1)
 if(!r.b.test(s))return"\u0628\u0631\u064a\u062f \u0625\u0644\u0643\u062a\u0631\u0648\u0646\u064a \u063a\u064a\u0631 \u0635\u0627\u0644\u062d"
 return null},
 $S:19}
@@ -149496,7 +149496,7 @@ A.bfg.prototype={
 $1(a){var s,r
 if(a==null||B.c.aA(a).length===0)return"\u0627\u0644\u0628\u0631\u064a\u062f \u0627\u0644\u0625\u0644\u0643\u062a\u0631\u0648\u0646\u064a \u0645\u0637\u0644\u0648\u0628"
 s=B.c.aA(a)
-r=A.bK("^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$",!0,!1)
+r=A.bK("^[\\w.+-]+@([\\w-]+\\.)+[\\w-]{2,4}$",!0,!1)
 if(!r.b.test(s))return"\u0628\u0631\u064a\u062f \u0625\u0644\u0643\u062a\u0631\u0648\u0646\u064a \u063a\u064a\u0631 \u0635\u0627\u0644\u062d"
 return null},
 $S:19}
@@ -151179,7 +151179,7 @@ $S:19}
 A.b2u.prototype={
 $1(a){var s,r=!1
 if(a!=null){s=B.c.aA(a)
-if(s.length!==0){r=A.bK("^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$",!0,!1)
+if(s.length!==0){r=A.bK("^[\\w.+-]+@([\\w-]+\\.)+[\\w-]{2,4}$",!0,!1)
 r=!r.b.test(s)}}if(r)return"\u0628\u0631\u064a\u062f \u0625\u0644\u0643\u062a\u0631\u0648\u0646\u064a \u063a\u064a\u0631 \u0635\u0627\u0644\u062d"
 return null},
 $S:19}
@@ -151310,7 +151310,7 @@ $S:19}
 A.b2C.prototype={
 $1(a){var s,r=!1
 if(a!=null){s=B.c.aA(a)
-if(s.length!==0){r=A.bK("^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$",!0,!1)
+if(s.length!==0){r=A.bK("^[\\w.+-]+@([\\w-]+\\.)+[\\w-]{2,4}$",!0,!1)
 r=!r.b.test(s)}}if(r)return"\u0628\u0631\u064a\u062f \u0625\u0644\u0643\u062a\u0631\u0648\u0646\u064a \u063a\u064a\u0631 \u0635\u0627\u0644\u062d"
 return null},
 $S:19}
