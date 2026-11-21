@@ -58,18 +58,24 @@ class _EditProfileWidgetState extends State<EditProfileWidget> {
   void initState() {
     super.initState();
     _prefill(currentUserDocument?.snapshotData);
-    // The global auth stream does not replay to late subscribers, so on a
-    // cold load (deep link) the document can arrive after this page built.
-    // Listen to the user document directly - it replays the current doc.
+    _ensureListener();
+  }
+
+  /// Attaches a direct listener to the user document once the signed-in
+  /// uid is known. Called from initState and from build: on a cold load
+  /// (deep link) the auth restore can finish after this page's first
+  /// build, so neither spot alone is enough. The document stream replays
+  /// the current doc, unlike the global broadcast auth stream.
+  void _ensureListener() {
+    if (_userSub != null) return;
     final uid = currentUserUid;
-    if (uid.isNotEmpty) {
-      _userSub = UsersRecord.getDocument(UsersRecord.collection.doc(uid))
-          .listen((doc) {
-        if (!_prefilled && mounted) {
-          setState(() => _prefill(doc.snapshotData));
-        }
-      });
-    }
+    if (uid.isEmpty) return;
+    _userSub = UsersRecord.getDocument(UsersRecord.collection.doc(uid))
+        .listen((doc) {
+      if (!_prefilled && mounted) {
+        setState(() => _prefill(doc.snapshotData));
+      }
+    });
   }
 
   /// Fills the form from the user document once. On a cold load (deep
@@ -170,7 +176,11 @@ class _EditProfileWidgetState extends State<EditProfileWidget> {
   Widget build(BuildContext context) {
     final theme = FlutterFlowTheme.of(context);
 
-    return GestureDetector(
+    return AuthUserStreamWidget(
+      builder: (context) {
+        _ensureListener();
+        if (!_prefilled) _prefill(currentUserDocument?.snapshotData);
+        return GestureDetector(
       onTap: () {
         FocusScope.of(context).unfocus();
         FocusManager.instance.primaryFocus?.unfocus();
@@ -288,6 +298,8 @@ class _EditProfileWidgetState extends State<EditProfileWidget> {
           ),
         ),
       ),
+        );
+      },
     );
   }
 
