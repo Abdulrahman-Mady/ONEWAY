@@ -180,7 +180,9 @@ service cloud.firestore {
     // Notifications
     match /notifications/{notificationId} {
       allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
-      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      // Users get their own confirmations; admins/moderators notify users
+      // (e.g. business application decisions).
+      allow create: if isSignedIn() && (request.resource.data.userId == request.auth.uid || isAdmin() || isModerator());
       allow update: if isSignedIn() && resource.data.userId == request.auth.uid &&
         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['is_read']);
       allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
@@ -200,10 +202,12 @@ service cloud.firestore {
       allow write: if false; // Only backend can write
     }
 
-    // Admin Notifications - Admin only
+    // Admin Notifications - read admin-only; the client app creates these
+    // (e.g. new business application alerts) so create is open to users.
     match /admin_notifications/{notificationId} {
       allow read: if isAdmin() || isModerator();
-      allow write: if false; // Only backend can write
+      allow create: if isSignedIn();
+      allow update, delete: if false; // Only backend can modify
     }
 
     // Field Assessment Requests
