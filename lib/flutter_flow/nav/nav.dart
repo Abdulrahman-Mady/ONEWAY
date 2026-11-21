@@ -434,43 +434,7 @@ class _LaunchGateState extends State<_LaunchGate> {
       future: _loadSeen(),
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
-          final theme = FlutterFlowTheme.of(context);
-          return Scaffold(
-            backgroundColor: theme.background,
-            body: Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(28),
-                    child: Image.asset(
-                      'assets/images/app_icon_1024.png',
-                      width: 120,
-                      height: 120,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  Text(
-                    'ONEWAY',
-                    style: GoogleFonts.cairo(
-                      fontSize: 26,
-                      fontWeight: FontWeight.w800,
-                      color: theme.primary,
-                      letterSpacing: 1.5,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'مصر بدون عوائق',
-                    style: GoogleFonts.cairo(
-                      fontSize: 15,
-                      color: theme.secondaryText,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
+          return const _OneWaySplash();
         }
         if (snapshot.data == false) return const SplashOnboardingWidget();
         // Wait for Firebase Auth to restore a persisted session before
@@ -482,10 +446,7 @@ class _LaunchGateState extends State<_LaunchGate> {
           builder: (context, authSnapshot) {
             if (authSnapshot.connectionState == ConnectionState.waiting &&
                 currentUser == null) {
-              return Scaffold(
-                backgroundColor: FlutterFlowTheme.of(context).background,
-                body: const Center(child: CircularProgressIndicator()),
-              );
+              return const _OneWaySplash();
             }
             return (currentUser?.loggedIn ?? widget.loggedIn)
                 ? const HomeDashboardWidget()
@@ -493,6 +454,91 @@ class _LaunchGateState extends State<_LaunchGate> {
           },
         );
       },
+    );
+  }
+}
+
+/// Full-bleed splash shown while launch state resolves: deep-navy dusk sky,
+/// Cairo skyline art along the bottom, brand mark and a loading line.
+class _OneWaySplash extends StatelessWidget {
+  const _OneWaySplash();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = FlutterFlowTheme.of(context);
+    return Scaffold(
+      backgroundColor: theme.navy,
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          // Skyline hero along the bottom edge.
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: Image.asset(
+              'assets/images/hero_cairo.png',
+              fit: BoxFit.fitWidth,
+              alignment: Alignment.bottomCenter,
+            ),
+          ),
+          // Centered brand block.
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 120),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(28),
+                    child: Image.asset(
+                      'assets/images/app_icon_1024.png',
+                      width: 110,
+                      height: 110,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    'ONEWAY',
+                    style: GoogleFonts.cairo(
+                      fontSize: 30,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                      letterSpacing: 2,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'اعرف المكان قبل ما تروح',
+                    style: GoogleFonts.cairo(
+                      fontSize: 16,
+                      color: theme.gold,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 28),
+                  SizedBox(
+                    width: 26,
+                    height: 26,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.5,
+                      color: theme.gold,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  Text(
+                    'جاري التحميل...',
+                    style: GoogleFonts.cairo(
+                      fontSize: 13,
+                      color: Colors.white.withValues(alpha: 0.75),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
