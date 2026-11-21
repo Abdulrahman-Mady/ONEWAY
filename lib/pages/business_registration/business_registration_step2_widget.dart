@@ -412,7 +412,7 @@ class _BusinessRegistrationStep2WidgetState extends State<BusinessRegistrationSt
   }
 
   bool _isValidEmail(String email) {
-    return RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email);
+    return RegExp(r'^[\w.+-]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email);
   }
 
   bool _isValidPhone(String phone) {
