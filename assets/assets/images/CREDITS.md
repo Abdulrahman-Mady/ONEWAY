@@ -22,3 +22,4 @@ hero_cairo.png, onboarding_hero.png, report_illus.png, avatar_default.png
 are original flat illustrations generated for this project.
 
 - assets/images/home_skyline_band.jpg - original AI-generated illustration (Cairo skyline: pyramids, Cairo Tower, Nile), created for ONEWAY from the user-provided design mockup. No external source, no attribution required.
+- assets/images/oneway_logo_mark.jpg - original AI-generated ONEWAY logo mark (wheelchair + glowing pin), created for ONEWAY from the user-provided design mockup. No external source, no attribution required.
