@@ -56,6 +56,12 @@ abstract class FlutterFlowTheme {
   late Color tertiaryLight;
   late Color tertiaryDark;
 
+  // ONEWAY redesign - deep navy dusk palette
+  late Color navy;
+  late Color navyLight;
+  late Color navyDark;
+  late Color gold;
+
   // Surface Colors
   late Color surface;
   late Color surfaceVariant;
@@ -217,6 +223,12 @@ class LightModeTheme extends FlutterFlowTheme {
   late Color tertiary = const Color(0xFFFFA62B);      // Warm amber
   late Color tertiaryLight = const Color(0xFFFFD98A); // Light amber
   late Color tertiaryDark = const Color(0xFFE67E22);  // Dark amber
+
+  // ONEWAY redesign - deep navy dusk palette
+  late Color navy = const Color(0xFF0B2447);          // Deep navy (hero backgrounds)
+  late Color navyLight = const Color(0xFF143C6B);     // Lighter navy (cards on navy)
+  late Color navyDark = const Color(0xFF071A33);      // Darkest navy (vignettes)
+  late Color gold = const Color(0xFFFFC24D);          // Sun gold accent
 
   // Surface Colors
   late Color surface = const Color(0xFFFFFFFF);
@@ -554,6 +566,12 @@ class DarkModeTheme extends FlutterFlowTheme {
   late Color tertiary = const Color(0xFFFFB84D);      // Warm amber
   late Color tertiaryLight = const Color(0xFFFFD98A); // Light amber
   late Color tertiaryDark = const Color(0xFFFF9F1A);  // Brighter amber
+
+  // ONEWAY redesign - deep navy dusk palette
+  late Color navy = const Color(0xFF0B2447);
+  late Color navyLight = const Color(0xFF143C6B);
+  late Color navyDark = const Color(0xFF071A33);
+  late Color gold = const Color(0xFFFFC24D);
 
   // Surface Colors - Dark surfaces
   late Color surface = const Color(0xFF1A1C1E);
