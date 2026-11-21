@@ -84,12 +84,18 @@ class _EmergencySOSWidgetState extends State<EmergencySOSWidget> {
 
   Future<void> _shareLocation() async {
     final pos = await EmergencyService.determineCurrentPosition();
-    final lat = pos?.latitude ?? EmergencyService.defaultLat;
-    final lng = pos?.longitude ?? EmergencyService.defaultLng;
-    final mapsUrl = 'https://maps.google.com/?q=$lat,$lng';
+    if (pos == null) {
+      // Never guess a location: tell the user honestly and stop.
+      _showMessage(
+        'تعذر تحديد موقعك الحالي. فعّل خدمة الموقع وامنح الإذن ثم أعد المحاولة.',
+        isError: true,
+      );
+      return;
+    }
+    final mapsUrl = 'https://maps.google.com/?q=${pos.latitude},${pos.longitude}';
     final text = '📍 موقعي الحالي: $mapsUrl';
     final uri = Uri.parse(
-        'whatsapp://send?text=${Uri.encodeComponent(text)}');
+        'https://wa.me/?text=${Uri.encodeComponent(text)}');
     final smsUri = Uri(
       scheme: 'sms',
       queryParameters: {'body': text},

@@ -28,10 +28,15 @@ void main() {
     });
   });
 
-  group('EmergencyService Default Configuration', () {
-    test('default coordinates are center of Cairo', () {
-      expect(EmergencyService.defaultLat, closeTo(30.0444, 0.001));
-      expect(EmergencyService.defaultLng, closeTo(31.2357, 0.001));
+  group('EmergencyService Configuration', () {
+    test('no default/guessed coordinates exist anywhere', () {
+      // The SOS flow must never fall back to a made-up location: it either
+      // has GPS, a manual pin, or says the location is unavailable.
+      expect(SosLocationStatus.values, hasLength(3));
+      expect(SosLocationStatus.values, contains(SosLocationStatus.gps));
+      expect(SosLocationStatus.values, contains(SosLocationStatus.manual));
+      expect(
+          SosLocationStatus.values, contains(SosLocationStatus.unavailable));
     });
 
     test('EmergencyResult models success and message correctly', () {
