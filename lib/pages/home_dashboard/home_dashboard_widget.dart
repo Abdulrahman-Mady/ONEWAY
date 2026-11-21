@@ -102,7 +102,11 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
           opacity: _fadeAnimation,
           child: SlideTransition(
             position: _slideAnimation,
-            child: CustomScrollView(
+            // Phone-shaped column like the mockup, even on wide desktop windows.
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 520),
+                child: CustomScrollView(
               slivers: [
                 // Hero Header
                 SliverToBoxAdapter(
@@ -129,6 +133,8 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
                   ),
                 ),
               ],
+                ),
+              ),
             ),
           ),
         ),
@@ -388,7 +394,7 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
       physics: const NeverScrollableScrollPhysics(),
       mainAxisSpacing: 14,
       crossAxisSpacing: 14,
-      childAspectRatio: 1.55,
+      childAspectRatio: 1.25,
       children: [
         for (final item in items)
           Material(
