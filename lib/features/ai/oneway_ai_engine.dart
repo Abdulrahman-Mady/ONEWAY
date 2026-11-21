@@ -314,7 +314,7 @@ class OnewayAIEngine {
       for (var i = 0; i < results.take(3).length; i++) {
         final p = results[i];
         final f = p.accessibilityFeatures;
-        sb.writeln('\n📍 **${p.name}** (${p.city})');
+        sb.writeln('\n📍 ${p.name} (${p.city})');
         final features = <String>[];
         if (f.hasRamp() && f.ramp) features.add('منحدر مجهز');
         if (f.hasSuitableElevator() && f.suitableElevator) features.add('مصعد');

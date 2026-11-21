@@ -571,7 +571,8 @@ class _VoiceAssistantInterfaceWidgetState
                                 child: Text(
                                   'جرّب أن تطلب مني بالصوت أو النص:',
                                   style: theme.labelMedium.copyWith(
-                                    color: theme.tertiaryText,
+                                    // Sits over the teal header gradient in idle state.
+                                    color: Colors.white.withValues(alpha: 0.9),
                                   ),
                                 ),
                               ),
