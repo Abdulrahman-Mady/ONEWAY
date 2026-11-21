@@ -117,7 +117,7 @@ class _ExploreMapWidgetState extends State<ExploreMapWidget>
       if (_rampOnly && (!features.hasRamp() || !features.ramp)) {
         return false;
       }
-      if (_verifiedOnly && place.verificationStatus != 'verified') {
+      if (_verifiedOnly && !place.isGenuinelyVerified) {
         return false;
       }
       return true;

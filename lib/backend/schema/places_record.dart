@@ -95,6 +95,27 @@ class PlacesRecord extends FirestoreRecord {
   DateTime? get lastVerifiedAt => _lastVerifiedAt;
   bool hasLastVerifiedAt() => _lastVerifiedAt != null;
 
+  // "verification_evidence" field: free-text evidence of a real field
+  // check (who went, what was measured, photo/report links). A 'verified'
+  // status without this is an unsupported claim.
+  String? _verificationEvidence;
+  String get verificationEvidence => _verificationEvidence ?? '';
+  bool hasVerificationEvidence() =>
+      _verificationEvidence != null && _verificationEvidence!.trim().isNotEmpty;
+
+  /// A 'verified' flag only counts when the document also carries real
+  /// field-verification evidence. Seed/demo places claim 'verified'
+  /// without any evidence and must not show a verified badge.
+  bool get isGenuinelyVerified =>
+      verificationStatus == 'verified' && hasVerificationEvidence();
+
+  /// Status to display to users: demotes unsupported 'verified' claims to
+  /// 'demoUnverified' so cards and details never show demo data as confirmed.
+  String get effectiveVerificationStatus =>
+      verificationStatus == 'verified' && !isGenuinelyVerified
+          ? 'demoUnverified'
+          : verificationStatus;
+
   // "rating" field.
   double? _rating;
   double get rating => _rating ?? 0.0;
@@ -135,6 +156,7 @@ class PlacesRecord extends FirestoreRecord {
     _verificationStatus = snapshotData['verification_status'] as String?;
     _verifiedBy = snapshotData['verified_by'] as String?;
     _lastVerifiedAt = snapshotData['last_verified_at'] as DateTime?;
+    _verificationEvidence = snapshotData['verification_evidence'] as String?;
     _rating = (snapshotData['rating'] as num?)?.toDouble();
     _reviewCount = (snapshotData['review_count'] as num?)?.toInt();
     _createdAt = snapshotData['created_at'] as DateTime?;

@@ -93,6 +93,8 @@ class _PlaceCardWidgetState extends State<PlaceCardWidget>
     switch (widget.verificationStatus) {
       case 'verified':
         return theme.success;
+      case 'demoUnverified':
+        return theme.warning;
       case 'needsUpdate':
         return theme.warning;
       case 'reportUnderReview':
@@ -107,6 +109,8 @@ class _PlaceCardWidgetState extends State<PlaceCardWidget>
     switch (widget.verificationStatus) {
       case 'verified':
         return 'تم التحقق ✓';
+      case 'demoUnverified':
+        return 'بيانات تجريبية - غير موثقة';
       case 'needsUpdate':
         return 'يحتاج تحديث';
       case 'reportUnderReview':

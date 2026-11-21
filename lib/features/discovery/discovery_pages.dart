@@ -56,7 +56,7 @@ class _PlaceExplorerPageState extends State<PlaceExplorerPage> {
           (!_restroomOnly ||
               (features.hasAccessibleRestroom() &&
                   features.accessibleRestroom)) &&
-          (!_verifiedOnly || place.verificationStatus == 'verified');
+          (!_verifiedOnly || place.isGenuinelyVerified);
     }).toList();
   }
 
@@ -244,7 +244,7 @@ class _PlaceTile extends StatelessWidget {
             if (place.address.isNotEmpty) Text(place.address),
             const SizedBox(height: 6),
             Wrap(spacing: 6, children: [
-              _StatusChip(status: place.verificationStatus),
+              _StatusChip(status: place.effectiveVerificationStatus),
               if (features.hasRamp() && features.ramp)
                 const Chip(label: Text('منحدر')),
               if (features.hasAccessibleRestroom() &&
@@ -530,7 +530,7 @@ class _PlaceDetailPageState extends State<PlaceDetailPage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _StatusChip(status: place.verificationStatus),
+                _StatusChip(status: place.effectiveVerificationStatus),
                 if (place.category.isNotEmpty)
                   Chip(
                     backgroundColor: theme.primaryLight,
@@ -631,7 +631,7 @@ class _PlaceDetailPageState extends State<PlaceDetailPage> {
               _InfoRow(label: 'مواعيد العمل', value: place.openingHours),
             _InfoRow(
                 label: 'حالة التحقق',
-                value: _statusLabel(place.verificationStatus)),
+                value: _statusLabel(place.effectiveVerificationStatus)),
             _InfoRow(
                 label: 'تاريخ آخر فحص',
                 value: place.lastVerifiedAt == null
@@ -1172,6 +1172,7 @@ class _StatusChip extends StatelessWidget {
 
 String _statusLabel(String status) => switch (status) {
       'verified' => 'تم التحقق',
+      'demoUnverified' => 'بيانات تجريبية - غير موثقة',
       'needsUpdate' => 'يحتاج إلى تحديث',
       'incomplete' => 'معلومات غير مكتملة',
       'reportUnderReview' => 'بلاغ قيد المراجعة',
