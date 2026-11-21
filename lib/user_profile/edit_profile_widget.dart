@@ -1,3 +1,4 @@
+import 'dart:async';
 import '/auth/firebase_auth/auth_util.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/backend/schema/users_record.dart';
@@ -51,11 +52,24 @@ class _EditProfileWidgetState extends State<EditProfileWidget> {
   ];
 
   bool _prefilled = false;
+  StreamSubscription<UsersRecord?>? _userSub;
 
   @override
   void initState() {
     super.initState();
     _prefill(currentUserDocument?.snapshotData);
+    // The global auth stream does not replay to late subscribers, so on a
+    // cold load (deep link) the document can arrive after this page built.
+    // Listen to the user document directly - it replays the current doc.
+    final uid = currentUserUid;
+    if (uid.isNotEmpty) {
+      _userSub = UsersRecord.getDocument(UsersRecord.collection.doc(uid))
+          .listen((doc) {
+        if (!_prefilled && mounted) {
+          setState(() => _prefill(doc.snapshotData));
+        }
+      });
+    }
   }
 
   /// Fills the form from the user document once. On a cold load (deep
@@ -84,6 +98,7 @@ class _EditProfileWidgetState extends State<EditProfileWidget> {
 
   @override
   void dispose() {
+    _userSub?.cancel();
     _nameController.dispose();
     _phoneController.dispose();
     _addressController.dispose();
@@ -155,11 +170,7 @@ class _EditProfileWidgetState extends State<EditProfileWidget> {
   Widget build(BuildContext context) {
     final theme = FlutterFlowTheme.of(context);
 
-    return AuthUserStreamWidget(
-      builder: (context) {
-        // Re-run prefill when the user document arrives after a cold load.
-        if (!_prefilled) _prefill(currentUserDocument?.snapshotData);
-        return GestureDetector(
+    return GestureDetector(
       onTap: () {
         FocusScope.of(context).unfocus();
         FocusManager.instance.primaryFocus?.unfocus();
@@ -277,8 +288,6 @@ class _EditProfileWidgetState extends State<EditProfileWidget> {
           ),
         ),
       ),
-        );
-      },
     );
   }
 
