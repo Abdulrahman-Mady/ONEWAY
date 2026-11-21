@@ -86,18 +86,46 @@ class _SettingsPageWidgetState extends State<SettingsPageWidget> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  _SettingsToggle(
-                    label: 'نص كبير',
-                    value: _model.toggleValue1!,
-                    onChanged: (value) => safeSetState(() => _model.toggleValue1 = value),
-                    theme: theme,
-                  ),
-                  const SizedBox(height: 12),
-                  _SettingsToggle(
-                    label: 'تباين مرتفع',
-                    value: _model.toggleValue2!,
-                    onChanged: (value) => safeSetState(() => _model.toggleValue2 = value),
-                    theme: theme,
+                  Container(
+                    decoration: BoxDecoration(
+                      color: theme.surface,
+                      borderRadius: BorderRadius.circular(theme.designToken.radius.xl),
+                      border: Border.all(color: theme.divider),
+                      boxShadow: [
+                        BoxShadow(
+                          blurRadius: 14,
+                          color: theme.shadow.withValues(alpha: 0.06),
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: _SettingsToggle(
+                            label: 'نص كبير',
+                            icon: Icons.text_fields_rounded,
+                            iconColor: theme.primary,
+                            value: _model.toggleValue1!,
+                            onChanged: (value) => safeSetState(() => _model.toggleValue1 = value),
+                            theme: theme,
+                          ),
+                        ),
+                        Divider(height: 1, color: theme.divider, indent: 16, endIndent: 16),
+                        Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: _SettingsToggle(
+                            label: 'تباين مرتفع',
+                            icon: Icons.contrast_rounded,
+                            iconColor: theme.gold,
+                            value: _model.toggleValue2!,
+                            onChanged: (value) => safeSetState(() => _model.toggleValue2 = value),
+                            theme: theme,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 24),
                   Container(
@@ -169,12 +197,16 @@ class _SettingsPageWidgetState extends State<SettingsPageWidget> {
 class _SettingsToggle extends StatelessWidget {
   const _SettingsToggle({
     required this.label,
+    required this.icon,
+    required this.iconColor,
     required this.value,
     required this.onChanged,
     required this.theme,
   });
 
   final String label;
+  final IconData icon;
+  final Color iconColor;
   final bool value;
   final ValueChanged<bool> onChanged;
   final FlutterFlowTheme theme;
@@ -184,12 +216,26 @@ class _SettingsToggle extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          label,
-          style: theme.bodyMedium.copyWith(
-            fontSize: 15,
-            color: theme.primaryText,
-          ),
+        Row(
+          children: [
+            Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                color: iconColor.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(13),
+              ),
+              child: Icon(icon, color: iconColor, size: 22),
+            ),
+            const SizedBox(width: 12),
+            Text(
+              label,
+              style: theme.bodyMedium.copyWith(
+                fontSize: 15,
+                color: theme.primaryText,
+              ),
+            ),
+          ],
         ),
         Switch.adaptive(
           value: value,
