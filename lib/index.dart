@@ -51,7 +51,8 @@ export '/help_support_page/help_support_page_widget.dart'
 export '/notifications_page/notifications_page_widget.dart'
     show NotificationsPageWidget;
 export '/settings_page/settings_page_widget.dart' show SettingsPageWidget;
-export '/user_profile/user_profile_widget.dart' show UserProfileWidget;
+export '/user_profile/user_profile_widget.dart'
+    show UserProfileWidget, EditProfileWidget;
 
 // Export services
 export '/auth/auth_service.dart' show AuthService, AuthResult;

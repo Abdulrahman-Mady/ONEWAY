@@ -45,7 +45,8 @@ service cloud.firestore {
         request.resource.data.keys().hasOnly([
           'email', 'display_name', 'photo_url', 'uid', 'phone_number',
           'role', 'created_time', 'updated_time', 'email_verified', 'phone_verified',
-          'gender', 'birth_date', 'address', 'business_application_id', 'business_application_status'
+          'gender', 'birth_date', 'address', 'governorate', 'mobility_type',
+          'business_application_id', 'business_application_status'
         ]) &&
         request.resource.data.role == 'user' &&
         request.resource.data.uid == request.auth.uid;
@@ -55,7 +56,8 @@ service cloud.firestore {
         !request.resource.data.keys().hasAny(['role', 'uid', 'created_time']) &&
         request.resource.data.diff(resource.data).affectedKeys().hasOnly([
           'display_name', 'phone_number', 'photo_url', 'email', 'updated_time',
-          'email_verified', 'phone_verified', 'gender', 'birth_date', 'address'
+          'email_verified', 'phone_verified', 'gender', 'birth_date', 'address',
+          'governorate', 'mobility_type'
         ]);
 
       // Only admins can delete users
@@ -173,6 +175,7 @@ service cloud.firestore {
     // Notifications
     match /notifications/{notificationId} {
       allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
       allow update: if isSignedIn() && resource.data.userId == request.auth.uid &&
         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['is_read']);
       allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
