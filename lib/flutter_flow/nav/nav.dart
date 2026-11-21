@@ -11,6 +11,7 @@ import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
 import '/features/discovery/discovery_pages.dart';
 import '/features/account/account_pages.dart';
+import '/features/admin/admin_dashboard_page.dart';
 import '/pages/authentication/registration_step1_widget.dart';
 import '/pages/authentication/registration_step2_widget.dart';
 import '/pages/authentication/registration_step3_widget.dart';
@@ -163,6 +164,15 @@ GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
           builder: (context, params) => const RoleProtectedPage(
             allowedRoles: {'businessOwner', 'moderator', 'admin', 'superAdmin'},
             child: BusinessAdminDashboardWidget(),
+          ),
+          requireAuth: true,
+        ),
+        FFRoute(
+          name: AdminDashboardPage.routeName,
+          path: AdminDashboardPage.routePath,
+          builder: (context, params) => const RoleProtectedPage(
+            allowedRoles: {'admin', 'superAdmin', 'moderator'},
+            child: AdminDashboardPage(),
           ),
           requireAuth: true,
         ),
