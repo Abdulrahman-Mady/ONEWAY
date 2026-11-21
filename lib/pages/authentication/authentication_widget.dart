@@ -154,9 +154,9 @@ class _AuthenticationWidgetState extends State<AuthenticationWidget>
             // brand lockup readable over it.
             Positioned.fill(
               child: Image.asset(
-                'assets/images/hero_cairo.png',
+                'assets/images/hero_pyramids.jpg',
                 fit: BoxFit.cover,
-                alignment: const Alignment(0, 0.35),
+                alignment: Alignment.center,
               ),
             ),
             Positioned.fill(
@@ -697,7 +697,7 @@ class _AuthTextField extends StatelessWidget {
         ),
         prefixIcon: Icon(
           prefixIcon,
-          color: theme.onSurfaceVariant,
+          color: theme.primary,
           size: 22,
         ),
         suffixIcon: suffixIcon,

@@ -311,7 +311,7 @@ class _CompleteProfileWidgetState extends State<CompleteProfileWidget>
       decoration: InputDecoration(
         labelText: 'الاسم الكامل *',
         hintText: 'أحمد محمد علي',
-        prefixIcon: Icon(Icons.person_outline_rounded, color: theme.onSurfaceVariant, size: 22),
+        prefixIcon: Icon(Icons.person_outline_rounded, color: theme.primary, size: 22),
         filled: true,
         fillColor: theme.surface,
         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
@@ -343,7 +343,7 @@ class _CompleteProfileWidgetState extends State<CompleteProfileWidget>
       decoration: InputDecoration(
         labelText: 'رقم الهاتف *',
         hintText: '010xxxxxxxx',
-        prefixIcon: Icon(Icons.phone_outlined, color: theme.onSurfaceVariant, size: 22),
+        prefixIcon: Icon(Icons.phone_outlined, color: theme.primary, size: 22),
         filled: true,
         fillColor: theme.surface,
         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
