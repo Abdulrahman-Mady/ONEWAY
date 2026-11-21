@@ -95,38 +95,32 @@ class _AuthenticationWidgetState extends State<AuthenticationWidget>
               child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
                 padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(
-                    minHeight: MediaQuery.of(context).size.height -
-                        MediaQuery.of(context).padding.top -
-                        MediaQuery.of(context).padding.bottom,
-                  ),
-                  child: IntrinsicHeight(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        const SizedBox(height: 40),
-                        // Logo and branding
-                        _buildHeader(theme),
-                        const SizedBox(height: 48),
-                        // Form
-                        _buildForm(theme),
-                        const SizedBox(height: 24),
-                        // Divider
-                        _buildDivider(theme),
-                        const SizedBox(height: 24),
-                        // Social login
-                        _buildSocialLogin(theme),
-                        const Spacer(),
-                        // Business Owner CTA Section
-                        _buildBusinessOwnerCTA(theme),
-                        const SizedBox(height: 16),
-                        // Footer
-                        _buildFooter(theme),
-                        const SizedBox(height: 32),
-                      ],
-                    ),
-                  ),
+                // Plain scrollable column: the previous ConstrainedBox +
+                // IntrinsicHeight + Spacer layout overflowed by a few pixels
+                // on some devices (e.g. Android 15 edge-to-edge).
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const SizedBox(height: 40),
+                    // Logo and branding
+                    _buildHeader(theme),
+                    const SizedBox(height: 48),
+                    // Form
+                    _buildForm(theme),
+                    const SizedBox(height: 24),
+                    // Divider
+                    _buildDivider(theme),
+                    const SizedBox(height: 24),
+                    // Social login
+                    _buildSocialLogin(theme),
+                    const SizedBox(height: 24),
+                    // Business Owner CTA Section
+                    _buildBusinessOwnerCTA(theme),
+                    const SizedBox(height: 16),
+                    // Footer
+                    _buildFooter(theme),
+                    const SizedBox(height: 32),
+                  ],
                 ),
               ),
             ),
