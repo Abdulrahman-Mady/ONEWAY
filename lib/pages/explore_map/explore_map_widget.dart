@@ -1,15 +1,15 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:latlong2/latlong.dart' as ll;
 import 'package:pointer_interceptor/pointer_interceptor.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart' hide LatLng;
 
 import '/backend/schema/places_record.dart';
 import '/components/button/button_widget.dart';
 import '/features/discovery/discovery_pages.dart';
 import '/features/emergency/emergency_service.dart';
-import '/flutter_flow/flutter_flow_google_map.dart';
 import '/flutter_flow/flutter_flow_icon_button.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
@@ -41,6 +41,8 @@ class _ExploreMapWidgetState extends State<ExploreMapWidget>
   bool _rampOnly = false;
   bool _verifiedOnly = false;
   bool _showBottomSheet = false;
+  int _filteredCount = 0;
+  final MapController _mapController = MapController();
 
   static const LatLng _cairoCenter = LatLng(30.0444, 31.2357);
 
@@ -48,7 +50,6 @@ class _ExploreMapWidgetState extends State<ExploreMapWidget>
   void initState() {
     super.initState();
     _model = createModel(context, () => ExploreMapModel());
-    _model.mapGoogleMapsCenter ??= _cairoCenter;
 
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 400),
@@ -75,12 +76,9 @@ class _ExploreMapWidgetState extends State<ExploreMapWidget>
     try {
       final pos = await EmergencyService.determineCurrentPosition();
       if (pos != null && mounted) {
-        final controller = await _model.mapGoogleMapsController.future;
-        controller.animateCamera(
-          CameraUpdate.newLatLngZoom(
-            LatLng(pos.latitude, pos.longitude).toGoogleMaps(),
-            15.0,
-          ),
+        _mapController.move(
+          ll.LatLng(pos.latitude, pos.longitude),
+          15.0,
         );
       } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -183,33 +181,54 @@ class _ExploreMapWidgetState extends State<ExploreMapWidget>
                     : <PlacesRecord>[];
 
                 final filteredPlaces = _filterPlaces(allPlaces);
+                if (filteredPlaces.length != _filteredCount) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (mounted) {
+                      setState(() => _filteredCount = filteredPlaces.length);
+                    }
+                  });
+                }
 
                 final markers = filteredPlaces.map((place) {
-                  return FlutterFlowMarker(
-                    place.reference.id,
-                    place.location!,
-                    () async => _onPlaceTap(place),
+                  final loc = place.location!;
+                  return Marker(
+                    point: ll.LatLng(loc.latitude, loc.longitude),
+                    width: 44,
+                    height: 44,
+                    child: GestureDetector(
+                      onTap: () => _onPlaceTap(place),
+                      child: Icon(
+                        Icons.location_on_rounded,
+                        color: theme.primary,
+                        size: 40,
+                        shadows: const [
+                          Shadow(color: Colors.black26, blurRadius: 4),
+                        ],
+                      ),
+                    ),
                   );
                 }).toList();
 
-                return FlutterFlowGoogleMap(
-                  controller: _model.mapGoogleMapsController,
-                  onCameraIdle: (latLng) =>
-                      _model.mapGoogleMapsCenter = latLng,
-                  initialLocation: _model.mapGoogleMapsCenter ?? _cairoCenter,
-                  markers: markers,
-                  markerColor: GoogleMarkerColor.violet,
-                  mapType: MapType.normal,
-                  style: GoogleMapStyle.standard,
-                  initialZoom: 12.5,
-                  allowInteraction: true,
-                  allowZoom: true,
-                  showZoomControls: false,
-                  showLocation: true,
-                  showCompass: false,
-                  showMapToolbar: false,
-                  showTraffic: false,
-                  centerMapOnMarkerTap: true,
+                return FlutterMap(
+                  mapController: _mapController,
+                  options: MapOptions(
+                    initialCenter: ll.LatLng(
+                      _cairoCenter.latitude,
+                      _cairoCenter.longitude,
+                    ),
+                    initialZoom: 12.5,
+                    interactionOptions: const InteractionOptions(
+                      flags: InteractiveFlag.all,
+                    ),
+                  ),
+                  children: [
+                    TileLayer(
+                      urlTemplate:
+                          'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                      userAgentPackageName: 'com.mycompany.onewayegypt',
+                    ),
+                    MarkerLayer(markers: markers),
+                  ],
                 );
               },
             ),
@@ -232,14 +251,13 @@ class _ExploreMapWidgetState extends State<ExploreMapWidget>
                     _MapFAB(
                       icon: Icons.center_focus_strong_rounded,
                       tooltip: 'العودة للقاهرة',
-                      onPressed: () async {
-                        final controller =
-                            await _model.mapGoogleMapsController.future;
-                        controller.animateCamera(
-                          CameraUpdate.newLatLngZoom(
-                            _cairoCenter.toGoogleMaps(),
-                            14.0,
+                      onPressed: () {
+                        _mapController.move(
+                          ll.LatLng(
+                            _cairoCenter.latitude,
+                            _cairoCenter.longitude,
                           ),
+                          14.0,
                         );
                       },
                     ),
@@ -415,8 +433,7 @@ class _ExploreMapWidgetState extends State<ExploreMapWidget>
   }
 
   int _getFilteredCount() {
-    // This would need access to the stream data - simplified for now
-    return 0;
+    return _filteredCount;
   }
 
   Widget _buildBottomSheet(FlutterFlowTheme theme, PlacesRecord place) {

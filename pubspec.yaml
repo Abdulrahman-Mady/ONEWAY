@@ -39,6 +39,8 @@ dependencies:
   google_fonts: ^6.2.1
   google_maps: ^8.0.0
   google_maps_flutter: ^2.10.0
+  flutter_map: ^8.2.2
+  latlong2: ^0.9.1
   google_sign_in: ^6.2.2
   intl: ^0.20.3
   json_path: ^0.7.2
