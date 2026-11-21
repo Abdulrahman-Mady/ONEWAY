@@ -117,15 +117,29 @@ class _RegistrationStep1WidgetState extends State<RegistrationStep1Widget>
                         // Back button
                         Align(
                           alignment: AlignmentDirectional.centerStart,
-                          child: IconButton(
-                            onPressed: () => context.safePop(),
-                            icon: Icon(
-                              Icons.arrow_forward_rounded,
-                              color: theme.primaryText,
-                              size: 28,
+                          child: Container(
+                            width: 44,
+                            height: 44,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  blurRadius: 10,
+                                  color: Colors.black.withValues(alpha: 0.08),
+                                  offset: const Offset(0, 3),
+                                ),
+                              ],
                             ),
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(),
+                            child: IconButton(
+                              onPressed: () => context.safePop(),
+                              icon: Icon(
+                                Icons.arrow_forward_rounded,
+                                color: theme.primaryText,
+                                size: 22,
+                              ),
+                              padding: EdgeInsets.zero,
+                            ),
                           ),
                         ),
                         const SizedBox(height: 10),
@@ -174,7 +188,19 @@ class _RegistrationStep1WidgetState extends State<RegistrationStep1Widget>
                         const Spacer(),
                         // Login link
                         _buildLoginLink(theme),
-                        const SizedBox(height: 32),
+                        const SizedBox(height: 24),
+                        // Illustrated Cairo skyline footer (full-bleed).
+                        Padding(
+                          padding:
+                              const EdgeInsets.symmetric(horizontal: -24),
+                          child: Image.asset(
+                            'assets/images/signup_skyline.jpg',
+                            height: 110,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                            alignment: Alignment.topCenter,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -190,28 +216,6 @@ class _RegistrationStep1WidgetState extends State<RegistrationStep1Widget>
   Widget _buildHeader(FlutterFlowTheme theme) {
     return Column(
       children: [
-        Container(
-          width: 80,
-          height: 80,
-          decoration: BoxDecoration(
-            color: theme.primary.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(theme.designToken.radius.xxl),
-            boxShadow: [
-              BoxShadow(
-                blurRadius: 16,
-                color: theme.primary.withValues(alpha: 0.15),
-                offset: const Offset(0, 6),
-                spreadRadius: 0,
-              ),
-            ],
-          ),
-          child: Icon(
-            Icons.person_add_alt_1_rounded,
-            color: theme.primary,
-            size: 40,
-          ),
-        ),
-        const SizedBox(height: 24),
         Text(
           'إنشاء حساب جديد',
           style: theme.headlineSmall.copyWith(
@@ -223,7 +227,7 @@ class _RegistrationStep1WidgetState extends State<RegistrationStep1Widget>
         ),
         const SizedBox(height: 8),
         Text(
-          'أدخل بياناتك الشخصية للبدء',
+          'انضم إلى مجتمع ONEWAY',
           style: theme.bodyLarge.copyWith(
             fontSize: 16,
             color: theme.secondaryText,
@@ -271,7 +275,7 @@ class _RegistrationStep1WidgetState extends State<RegistrationStep1Widget>
       decoration: InputDecoration(
         labelText: 'الاسم الكامل *',
         hintText: 'أحمد محمد علي',
-        prefixIcon: Icon(Icons.person_outline_rounded, color: theme.onSurfaceVariant, size: 22),
+        prefixIcon: Icon(Icons.person_outline_rounded, color: theme.primary, size: 22),
         filled: true,
         fillColor: theme.surface,
         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
@@ -304,7 +308,7 @@ class _RegistrationStep1WidgetState extends State<RegistrationStep1Widget>
       decoration: InputDecoration(
         labelText: 'البريد الإلكتروني *',
         hintText: 'example@mail.com',
-        prefixIcon: Icon(Icons.email_outlined, color: theme.onSurfaceVariant, size: 22),
+        prefixIcon: Icon(Icons.email_outlined, color: theme.primary, size: 22),
         filled: true,
         fillColor: theme.surface,
         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
@@ -337,7 +341,7 @@ class _RegistrationStep1WidgetState extends State<RegistrationStep1Widget>
       decoration: InputDecoration(
         labelText: 'رقم الهاتف *',
         hintText: '010xxxxxxxx',
-        prefixIcon: Icon(Icons.phone_outlined, color: theme.onSurfaceVariant, size: 22),
+        prefixIcon: Icon(Icons.phone_outlined, color: theme.primary, size: 22),
         filled: true,
         fillColor: theme.surface,
         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
@@ -370,7 +374,7 @@ class _RegistrationStep1WidgetState extends State<RegistrationStep1Widget>
       decoration: InputDecoration(
         labelText: 'كلمة المرور *',
         hintText: '••••••••',
-        prefixIcon: Icon(Icons.lock_outline_rounded, color: theme.onSurfaceVariant, size: 22),
+        prefixIcon: Icon(Icons.lock_outline_rounded, color: theme.primary, size: 22),
         suffixIcon: IconButton(
           icon: Icon(
             _passwordVisible ? Icons.visibility_outlined : Icons.visibility_off_outlined,
@@ -411,7 +415,7 @@ class _RegistrationStep1WidgetState extends State<RegistrationStep1Widget>
       decoration: InputDecoration(
         labelText: 'تأكيد كلمة المرور *',
         hintText: '••••••••',
-        prefixIcon: Icon(Icons.lock_outline_rounded, color: theme.onSurfaceVariant, size: 22),
+        prefixIcon: Icon(Icons.lock_outline_rounded, color: theme.primary, size: 22),
         suffixIcon: IconButton(
           icon: Icon(
             _confirmPasswordVisible ? Icons.visibility_outlined : Icons.visibility_off_outlined,
