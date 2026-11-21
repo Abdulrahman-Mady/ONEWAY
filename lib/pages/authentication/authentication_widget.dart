@@ -567,7 +567,7 @@ class _AuthenticationWidgetState extends State<AuthenticationWidget>
             size: 22,
           ),
           iconPresent: true,
-          onPressed: () => context.pushNamed(HomeDashboardWidget.routeName),
+          onPressed: _handleGuestEntry,
         ),
         const SizedBox(height: 24),
         // Language
@@ -631,6 +631,29 @@ class _AuthenticationWidgetState extends State<AuthenticationWidget>
       } else {
         await AuthRouter.instance.navigateAfterLogin(context);
       }
+    } else if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result.message ?? 'فشل تسجيل الدخول'),
+          duration: const Duration(milliseconds: 4000),
+        ),
+      );
+    }
+  }
+
+  Future<void> _handleGuestEntry() async {
+    GoRouter.of(context).prepareAuthEvent();
+    final result = await AuthService.instance.signInAnonymously(context: context);
+    if (!context.mounted) return;
+    if (result.success) {
+      await AuthRouter.instance.navigateAfterLogin(context);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result.message ?? 'فشل الدخول كزائر'),
+          duration: const Duration(milliseconds: 4000),
+        ),
+      );
     }
   }
 }
