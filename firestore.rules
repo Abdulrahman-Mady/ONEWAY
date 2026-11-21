@@ -52,12 +52,15 @@ service cloud.firestore {
         request.resource.data.uid == request.auth.uid;
 
       // Users can update their own profile (except role)
+      // NOTE: on update, request.resource.data is the MERGED document, so
+      // keys().hasAny(['role', ...]) is always true and must not be used.
+      // The diff allowlist alone blocks changes to role/uid/created_time.
       allow update: if isSignedIn() && isOwner(userId) &&
-        !request.resource.data.keys().hasAny(['role', 'uid', 'created_time']) &&
         request.resource.data.diff(resource.data).affectedKeys().hasOnly([
           'display_name', 'phone_number', 'photo_url', 'email', 'updated_time',
           'email_verified', 'phone_verified', 'gender', 'birth_date', 'address',
-          'governorate', 'mobility_type'
+          'governorate', 'mobility_type',
+          'business_application_id', 'business_application_status'
         ]);
 
       // Only admins can delete users
@@ -100,9 +103,11 @@ service cloud.firestore {
 
       // Business owner can update their business (except status)
       // Admins/moderators can update status
+      // (diff-based: request.resource.data is the merged document, so a plain
+      // keys().hasAny check would always match and deny every update)
       allow update: if isSignedIn() && (
         (isBusinessOwner() && isBusinessOwnerOf(businessId) &&
-         !request.resource.data.keys().hasAny(['status', 'ownerId', 'created_at'])) ||
+         !request.resource.data.diff(resource.data).affectedKeys().hasAny(['status', 'ownerId', 'created_at'])) ||
         (isAdmin() || isModerator())
       );
 
@@ -279,6 +284,13 @@ service cloud.firestore {
         resource.data.ownerId == request.auth.uid || isAdmin()
       );
       allow write: if false;
+    }
+
+    // Email verification codes (client-side OTP for email verification
+    // during signup and email change). Password reset uses Firebase Auth's
+    // native flow, so these docs are only touched by signed-in users.
+    match /verificationCodes/{email} {
+      allow read, create, update, delete: if isSignedIn();
     }
 
     // Default deny for any other collections
