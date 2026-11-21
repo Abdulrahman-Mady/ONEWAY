@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '/backend/backend.dart';
 import '/backend/schema/structs/index.dart';
 
@@ -108,9 +110,9 @@ GoRouter createRouter(AppStateNotifier appStateNotifier) => GoRouter(
         FFRoute(
           name: '_initialize',
           path: '/',
-          builder: (context, _) => appStateNotifier.loggedIn
-              ? const HomeDashboardWidget()
-              : const AuthenticationWidget(),
+          builder: (context, _) => _LaunchGate(
+            loggedIn: appStateNotifier.loggedIn,
+          ),
         ),
         FFRoute(
           name: SplashOnboardingWidget.routeName,
@@ -397,6 +399,81 @@ extension _GoRouterStateExtensions on GoRouterState {
 }
 
 /// A presentation-layer guard for privileged routes. Firestore rules remain
+/// Key of the SharedPreferences flag recording that the welcome/onboarding
+/// screens were shown once.
+const kOnboardingSeenKey = 'onboarding_seen_v1';
+
+/// Decides the very first screen of the app: welcome/onboarding slides on
+/// first launch, then the usual signed-in/signed-out split.
+class _LaunchGate extends StatefulWidget {
+  const _LaunchGate({required this.loggedIn});
+
+  final bool loggedIn;
+
+  @override
+  State<_LaunchGate> createState() => _LaunchGateState();
+}
+
+class _LaunchGateState extends State<_LaunchGate> {
+  static Future<bool>? _seenFuture;
+
+  Future<bool> _loadSeen() =>
+      _seenFuture ??= SharedPreferences.getInstance()
+          .then((prefs) => prefs.getBool(kOnboardingSeenKey) ?? false);
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<bool>(
+      future: _loadSeen(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          final theme = FlutterFlowTheme.of(context);
+          return Scaffold(
+            backgroundColor: theme.background,
+            body: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(28),
+                    child: Image.asset(
+                      'assets/images/app_icon_1024.png',
+                      width: 120,
+                      height: 120,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    'ONEWAY',
+                    style: GoogleFonts.cairo(
+                      fontSize: 26,
+                      fontWeight: FontWeight.w800,
+                      color: theme.primary,
+                      letterSpacing: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'مصر بدون عوائق',
+                    style: GoogleFonts.cairo(
+                      fontSize: 15,
+                      color: theme.secondaryText,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+        if (snapshot.data == false) return const SplashOnboardingWidget();
+        return widget.loggedIn
+            ? const HomeDashboardWidget()
+            : const AuthenticationWidget();
+      },
+    );
+  }
+}
+
 /// the authority for data access; this prevents an ordinary signed-in user
 /// from being shown a portal they are not authorized to use.
 class RoleProtectedPage extends StatelessWidget {

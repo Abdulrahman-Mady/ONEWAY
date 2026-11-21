@@ -16,12 +16,15 @@ import 'flutter_flow/flutter_flow_util.dart';
 /// palette in FlutterFlowTheme, so every screen (including admin and
 /// account pages that use plain Material widgets) shares one look.
 ThemeData _buildBrandedTheme(FlutterFlowTheme brand, Brightness brightness) {
+  final base = ThemeData(brightness: brightness, useMaterial3: true);
+  final cairoText = GoogleFonts.cairoTextTheme(base.textTheme);
   return ThemeData(
     brightness: brightness,
-    useMaterial3: false,
+    useMaterial3: true,
     primaryColor: brand.primary,
     scaffoldBackgroundColor: brand.background,
     fontFamily: GoogleFonts.cairo().fontFamily,
+    textTheme: cairoText,
     colorScheme: ColorScheme.fromSeed(
       seedColor: brand.primary,
       brightness: brightness,
@@ -29,6 +32,7 @@ ThemeData _buildBrandedTheme(FlutterFlowTheme brand, Brightness brightness) {
       secondary: brand.secondary,
       tertiary: brand.tertiary,
       error: brand.error,
+      surface: brand.surface,
     ),
     appBarTheme: AppBarTheme(
       backgroundColor: brand.primary,
@@ -41,6 +45,99 @@ ThemeData _buildBrandedTheme(FlutterFlowTheme brand, Brightness brightness) {
         fontWeight: FontWeight.w700,
       ),
     ),
+    cardTheme: CardThemeData(
+      color: brand.surface,
+      elevation: 0,
+      margin: EdgeInsets.zero,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: brand.outlineVariant),
+      ),
+      clipBehavior: Clip.antiAlias,
+    ),
+    elevatedButtonTheme: ElevatedButtonThemeData(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: brand.primary,
+        foregroundColor: brand.onPrimary,
+        minimumSize: const Size(48, 52),
+        elevation: 0,
+        textStyle: GoogleFonts.cairo(fontSize: 16, fontWeight: FontWeight.w700),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      ),
+    ),
+    outlinedButtonTheme: OutlinedButtonThemeData(
+      style: OutlinedButton.styleFrom(
+        foregroundColor: brand.primary,
+        minimumSize: const Size(48, 52),
+        side: BorderSide(color: brand.primary, width: 1.5),
+        textStyle: GoogleFonts.cairo(fontSize: 16, fontWeight: FontWeight.w700),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      ),
+    ),
+    textButtonTheme: TextButtonThemeData(
+      style: TextButton.styleFrom(
+        foregroundColor: brand.primary,
+        textStyle: GoogleFonts.cairo(fontSize: 15, fontWeight: FontWeight.w600),
+      ),
+    ),
+    inputDecorationTheme: InputDecorationTheme(
+      filled: true,
+      fillColor: brand.surfaceVariant,
+      hintStyle: GoogleFonts.cairo(color: brand.hintText, fontSize: 14),
+      labelStyle: GoogleFonts.cairo(color: brand.secondaryText, fontSize: 14),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide.none,
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide(color: brand.outlineVariant),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide(color: brand.primary, width: 2),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide(color: brand.error),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide(color: brand.error, width: 2),
+      ),
+    ),
+    snackBarTheme: SnackBarThemeData(
+      behavior: SnackBarBehavior.floating,
+      backgroundColor: brand.onBackground,
+      contentTextStyle: GoogleFonts.cairo(color: brand.background, fontSize: 14),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    ),
+    dialogTheme: DialogThemeData(
+      backgroundColor: brand.surface,
+      titleTextStyle: GoogleFonts.cairo(
+        color: brand.primaryText,
+        fontSize: 18,
+        fontWeight: FontWeight.w700,
+      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+    ),
+    bottomSheetTheme: BottomSheetThemeData(
+      backgroundColor: brand.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+    ),
+    tabBarTheme: TabBarThemeData(
+      labelColor: brand.primary,
+      unselectedLabelColor: brand.secondaryText,
+      indicatorColor: brand.primary,
+      labelStyle: GoogleFonts.cairo(fontSize: 14, fontWeight: FontWeight.w700),
+      unselectedLabelStyle:
+          GoogleFonts.cairo(fontSize: 14, fontWeight: FontWeight.w600),
+    ),
+    dividerTheme: DividerThemeData(color: brand.divider, thickness: 1),
+    iconTheme: IconThemeData(color: brand.onSurfaceVariant),
     floatingActionButtonTheme: FloatingActionButtonThemeData(
       backgroundColor: brand.tertiary,
       foregroundColor: brand.onPrimary,

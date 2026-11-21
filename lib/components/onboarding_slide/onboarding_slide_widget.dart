@@ -1,6 +1,5 @@
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'onboarding_slide_model.dart';
@@ -11,17 +10,15 @@ class OnboardingSlideWidget extends StatefulWidget {
     super.key,
     String? title,
     String? desc,
-    String? lottieDesc,
+    this.icon = Icons.accessible_forward_rounded,
     this.onNext,
   })  : title = title ?? 'اعرف المكان قبل ما تروح',
         desc = desc ??
-            'استكشف المطاعم، المستشفيات، والمراكز التجارية المجهزة لاستقبالك بكل سهولة.',
-        lottieDesc = lottieDesc ??
-            'https://dimg.dreamflow.cloud/v1/lottie/wheelchair+user+exploring+city+map';
+            'استكشف المطاعم، المستشفيات، والمراكز التجارية المجهزة لاستقبالك بكل سهولة.';
 
   final String title;
   final String desc;
-  final String lottieDesc;
+  final IconData icon;
   final VoidCallback? onNext;
 
   @override
@@ -99,19 +96,30 @@ class _OnboardingSlideWidgetState extends State<OnboardingSlideWidget>
                   borderRadius: BorderRadius.circular(theme.designToken.radius.xxl),
                 ),
                 padding: const EdgeInsets.all(24),
-                child: CachedNetworkImage(
-                  imageUrl: widget.lottieDesc,
-                  fit: BoxFit.contain,
-                  placeholder: (context, url) => Center(
-                    child: CircularProgressIndicator(
-                      strokeWidth: 3,
-                      color: theme.primary,
+                child: Center(
+                  child: Container(
+                    width: 180,
+                    height: 180,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [theme.primary, theme.primaryDark],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          blurRadius: 32,
+                          color: theme.primary.withValues(alpha: 0.35),
+                          offset: const Offset(0, 12),
+                        ),
+                      ],
                     ),
-                  ),
-                  errorWidget: (context, url, error) => Icon(
-                    Icons.accessible_forward_rounded,
-                    size: 120,
-                    color: theme.primary.withValues(alpha: 0.5),
+                    child: Icon(
+                      widget.icon,
+                      size: 96,
+                      color: theme.onPrimary,
+                    ),
                   ),
                 ),
               ),

@@ -1,3 +1,4 @@
+import '/auth/firebase_auth/auth_util.dart';
 import '/components/bottom_nav/bottom_nav_widget.dart';
 import '/components/bottom_nav_child/bottom_nav_child_widget.dart';
 import '/components/button/button_widget.dart';
@@ -192,6 +193,33 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
     );
   }
 
+  Future<void> _confirmLogout(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('تسجيل الخروج'),
+        content:
+            const Text('هل أنت متأكد أنك تريد تسجيل الخروج من حسابك؟'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('إلغاء'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('تسجيل الخروج'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+    GoRouter.of(context).prepareAuthEvent();
+    await authManager.signOut();
+    if (context.mounted) {
+      context.goNamedAuth(AuthenticationWidget.routeName, context.mounted);
+    }
+  }
+
   Widget _buildHeroHeader(FlutterFlowTheme theme) {
     return Container(
       decoration: BoxDecoration(
@@ -245,9 +273,20 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
                       ),
                     ],
                   ),
-                  _HeroActionButton(
-                    icon: Icons.notifications_none_rounded,
-                    onTap: () => context.pushNamed(NotificationsPageWidget.routeName),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _HeroActionButton(
+                        icon: Icons.notifications_none_rounded,
+                        onTap: () => context
+                            .pushNamed(NotificationsPageWidget.routeName),
+                      ),
+                      const SizedBox(width: 12),
+                      _HeroActionButton(
+                        icon: Icons.logout_rounded,
+                        onTap: () => _confirmLogout(context),
+                      ),
+                    ],
                   ),
                 ],
               ),

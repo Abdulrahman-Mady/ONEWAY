@@ -3,8 +3,10 @@ import '/components/dot/dot_widget.dart';
 import '/components/onboarding_slide/onboarding_slide_widget.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
+import '/flutter_flow/nav/nav.dart';
 import '/index.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'splash_onboarding_model.dart';
 export 'splash_onboarding_model.dart';
 
@@ -65,6 +67,14 @@ class _SplashOnboardingWidgetState extends State<SplashOnboardingWidget>
     super.dispose();
   }
 
+  Future<void> _markSeenAndContinue() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(kOnboardingSeenKey, true);
+    } catch (_) {}
+    if (mounted) context.goNamed(AuthenticationWidget.routeName);
+  }
+
   void _nextPage() {
     if (_currentPage < 2) {
       _pageController.nextPage(
@@ -72,12 +82,12 @@ class _SplashOnboardingWidgetState extends State<SplashOnboardingWidget>
         curve: Curves.easeOutCubic,
       );
     } else {
-      context.goNamed(AuthenticationWidget.routeName);
+      _markSeenAndContinue();
     }
   }
 
   void _skipOnboarding() {
-    context.goNamed(AuthenticationWidget.routeName);
+    _markSeenAndContinue();
   }
 
   @override
@@ -149,22 +159,19 @@ class _SplashOnboardingWidgetState extends State<SplashOnboardingWidget>
                               title: 'اعرف المكان قبل ما تروح',
                               desc:
                                   'استكشف المطاعم، المستشفيات، والمراكز التجارية المجهزة لاستقبالك بكل سهولة.',
-                              lottieDesc:
-                                  'https://dimg.dreamflow.cloud/v1/lottie/wheelchair+user+exploring+city+map',
+                              icon: Icons.accessible_forward_rounded,
                             ),
                             OnboardingSlideWidget(
                               title: 'فلاتر ذكية للإتاحة',
                               desc:
                                   'اختر ما يناسبك: منحدر، مصعد مجهز، حمام مناسب، موقف سيارات، والمزيد.',
-                              lottieDesc:
-                                  'https://dimg.dreamflow.cloud/v1/lottie/accessibility+filters+mobile+app',
+                              icon: Icons.tune_rounded,
                             ),
                             OnboardingSlideWidget(
                               title: 'مجتمع يشارك الخبرات',
                               desc:
                                   'أضف تقييمك، أبلغ عن عائق، وساعد الآخرين في اتخاذ قرارات أفضل.',
-                              lottieDesc:
-                                  'https://dimg.dreamflow.cloud/v1/lottie/community+sharing+accessibility+reviews',
+                              icon: Icons.diversity_1_rounded,
                             ),
                           ],
                         ),
