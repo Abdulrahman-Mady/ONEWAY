@@ -471,15 +471,27 @@ class _OneWaySplash extends StatelessWidget {
       body: Stack(
         fit: StackFit.expand,
         children: [
-          // Skyline hero along the bottom edge.
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
+          // Full-bleed pyramids photograph under a deep navy veil.
+          Positioned.fill(
             child: Image.asset(
-              'assets/images/hero_cairo.png',
-              fit: BoxFit.fitWidth,
-              alignment: Alignment.bottomCenter,
+              'assets/images/hero_pyramids.jpg',
+              fit: BoxFit.cover,
+              alignment: Alignment.center,
+            ),
+          ),
+          Positioned.fill(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    theme.navy.withValues(alpha: 0.88),
+                    theme.navy.withValues(alpha: 0.45),
+                    theme.navy.withValues(alpha: 0.90),
+                  ],
+                ),
+              ),
             ),
           ),
           // Centered brand block.

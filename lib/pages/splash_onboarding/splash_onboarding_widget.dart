@@ -127,9 +127,9 @@ class _SplashOnboardingWidgetState extends State<SplashOnboardingWidget>
                     fit: StackFit.expand,
                     children: [
                       Image.asset(
-                        'assets/images/onboarding_hero.png',
+                        'assets/images/onboarding_wheelchair.jpg',
                         fit: BoxFit.cover,
-                        alignment: Alignment.topCenter,
+                        alignment: Alignment.center,
                       ),
                       // Fade into the sheet color at the bottom.
                       Positioned(
