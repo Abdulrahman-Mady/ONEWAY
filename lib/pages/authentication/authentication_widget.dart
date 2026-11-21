@@ -98,7 +98,11 @@ class _AuthenticationWidgetState extends State<AuthenticationWidget>
                 // Plain scrollable column: the previous ConstrainedBox +
                 // IntrinsicHeight + Spacer layout overflowed by a few pixels
                 // on some devices (e.g. Android 15 edge-to-edge).
-                child: Column(
+                // Phone-shaped column like the mockup, even on wide windows.
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 520),
+                    child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     // Navy Cairo hero header
@@ -130,6 +134,8 @@ class _AuthenticationWidgetState extends State<AuthenticationWidget>
                       ),
                     ),
                   ],
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -166,9 +172,9 @@ class _AuthenticationWidgetState extends State<AuthenticationWidget>
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      theme.navy.withValues(alpha: 0.85),
-                      theme.navy.withValues(alpha: 0.30),
-                      theme.navy.withValues(alpha: 0.75),
+                      theme.navy.withValues(alpha: 0.60),
+                      theme.navy.withValues(alpha: 0.12),
+                      theme.navy.withValues(alpha: 0.62),
                     ],
                   ),
                 ),
