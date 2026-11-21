@@ -149,6 +149,7 @@ class _AuthenticationWidgetState extends State<AuthenticationWidget>
         borderRadius: const BorderRadius.vertical(bottom: Radius.circular(36)),
         child: Stack(
           fit: StackFit.expand,
+          alignment: Alignment.topCenter,
           children: [
             // Cairo skyline art, anchored low so it frames the header.
             Positioned(
@@ -164,6 +165,8 @@ class _AuthenticationWidgetState extends State<AuthenticationWidget>
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 32, 24, 100),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   // Logo
                   Container(
