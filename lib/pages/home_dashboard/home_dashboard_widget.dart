@@ -247,7 +247,7 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget>
               right: 0,
               bottom: 0,
               child: Image.asset(
-                'assets/images/hero_cairo.png',
+                'assets/images/hero_cairo_city.jpg',
                 height: 110,
                 fit: BoxFit.cover,
                 alignment: const Alignment(0, 0.5),
@@ -836,6 +836,8 @@ class _NearbyPlaceCard extends StatelessWidget {
       if (place.category.isNotEmpty) place.category,
       if (place.city.isNotEmpty) place.city else if (place.governorate.isNotEmpty) place.governorate,
     ];
+    final photoUrl = place.photoUrl;
+    final fallbackAsset = _fallbackPlacePhoto(place.category);
     return Material(
       color: theme.surface,
       borderRadius: BorderRadius.circular(20),
@@ -846,59 +848,76 @@ class _NearbyPlaceCard extends StatelessWidget {
         ),
         child: Container(
           width: 220,
-          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
             border: Border.all(color: theme.outlineVariant),
           ),
+          clipBehavior: Clip.antiAlias,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: theme.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(Icons.place_rounded, color: theme.primary),
+              SizedBox(
+                height: 92,
+                width: double.infinity,
+                child: photoUrl.isNotEmpty
+                    ? Image.network(
+                        photoUrl,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Image.asset(
+                          fallbackAsset,
+                          fit: BoxFit.cover,
+                        ),
+                      )
+                    : Image.asset(
+                        fallbackAsset,
+                        fit: BoxFit.cover,
+                      ),
               ),
-              const SizedBox(height: 12),
-              Text(
-                place.name.isEmpty ? 'مكان بدون اسم' : place.name,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: theme.titleSmall.copyWith(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: theme.primaryText,
-                ),
-              ),
-              const SizedBox(height: 4),
-              if (subtitleParts.isNotEmpty)
-                Text(
-                  subtitleParts.join(' · '),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.bodySmall.copyWith(
-                    fontSize: 12,
-                    color: theme.secondaryText,
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        place.name.isEmpty ? 'مكان بدون اسم' : place.name,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.titleSmall.copyWith(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: theme.primaryText,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      if (subtitleParts.isNotEmpty)
+                        Text(
+                          subtitleParts.join(' · '),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.bodySmall.copyWith(
+                            fontSize: 12,
+                            color: theme.secondaryText,
+                          ),
+                        ),
+                      const Spacer(),
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 6,
+                        children: [
+                          if (features.hasRamp() && features.ramp)
+                            _MiniFeatureChip(label: 'منحدر', theme: theme),
+                          if (features.hasAccessibleRestroom() &&
+                              features.accessibleRestroom)
+                            _MiniFeatureChip(label: 'حمام مجهز', theme: theme),
+                          if (features.hasSuitableElevator() &&
+                              features.suitableElevator)
+                            _MiniFeatureChip(label: 'مصعد', theme: theme),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
-              const Spacer(),
-              Wrap(
-                spacing: 6,
-                runSpacing: 6,
-                children: [
-                  if (features.hasRamp() && features.ramp)
-                    _MiniFeatureChip(label: 'منحدر', theme: theme),
-                  if (features.hasAccessibleRestroom() &&
-                      features.accessibleRestroom)
-                    _MiniFeatureChip(label: 'حمام مجهز', theme: theme),
-                  if (features.hasSuitableElevator() &&
-                      features.suitableElevator)
-                    _MiniFeatureChip(label: 'مصعد', theme: theme),
-                ],
               ),
             ],
           ),
@@ -906,6 +925,22 @@ class _NearbyPlaceCard extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Category-matched local photo used when a place has no photo URL.
+String _fallbackPlacePhoto(String category) {
+  final c = category.toLowerCase();
+  if (c.contains('مول') || c.contains('تسوق') || c.contains('mall') || c.contains('shop')) {
+    return 'assets/images/place_mall.jpg';
+  }
+  if (c.contains('مترو') || c.contains('محطة') || c.contains('مواصلات') ||
+      c.contains('metro') || c.contains('transport')) {
+    return 'assets/images/place_metro.jpg';
+  }
+  if (c.contains('متحف') || c.contains('ثقاف') || c.contains('museum') || c.contains('culture')) {
+    return 'assets/images/place_museum.jpg';
+  }
+  return 'assets/images/hero_pyramids.jpg';
 }
 
 class _MiniFeatureChip extends StatelessWidget {

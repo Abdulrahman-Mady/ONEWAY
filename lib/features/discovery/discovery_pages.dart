@@ -504,16 +504,28 @@ class _PlaceDetailPageState extends State<PlaceDetailPage> {
         body: ListView(
           padding: const EdgeInsets.all(20),
           children: [
-            if (place.photoUrl.isNotEmpty)
-              ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: Image.network(
-                  place.photoUrl,
-                  height: 200,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => const SizedBox(),
-                ),
-              ),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: place.photoUrl.isNotEmpty
+                  ? Image.network(
+                      place.photoUrl,
+                      height: 200,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Image.asset(
+                        'assets/images/hero_pyramids.jpg',
+                        height: 200,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                      ),
+                    )
+                  : Image.asset(
+                      'assets/images/hero_pyramids.jpg',
+                      height: 200,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                    ),
+            ),
             const SizedBox(height: 16),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
