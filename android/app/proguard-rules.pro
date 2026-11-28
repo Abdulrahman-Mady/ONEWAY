@@ -16,11 +16,15 @@
 # Keep flutter_local_notifications & FCM serialization classes under R8 shrinking
 -keep class com.dexterous.** { *; }
 -keep class com.google.firebase.messaging.** { *; }
--keepattributes *Annotation*
--keepattributes Signature
+-keep class com.google.firebase.appcheck.** { *; }
+-keep class com.google.android.play.core.** { *; }
+-keep class com.google.android.gms.auth.** { *; }
+-keepattributes *Annotation*,Signature,InnerClasses,EnclosingMethod,Exceptions
 -keep class com.google.gson.** { *; }
 -keep class * extends com.google.gson.TypeAdapter
 -keep class * extends com.google.gson.reflect.TypeToken
+-dontwarn com.google.android.play.core.**
+-dontwarn org.slf4j.**
 
 
 

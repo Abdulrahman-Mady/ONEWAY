@@ -1,11 +1,10 @@
 # دليل نشر تطبيق ONEWAY على Google Play
 
 ## 1. معرّف التطبيق (Package ID) وربطه بـ Firebase
-تم اعتماد معرّف التطبيق الرسمي: **`com.onewayegypt.app`** في Android و iOS و Flutter.
-> **مهم جداً قبل البناء:** ملف `android/app/google-services.json` الحالي ما زال يخص المعرّف القديم.
-1. افتح **Firebase Console** (مشروع `oneway-f665d`) → **Project Settings** → **Add app (Android)**.
-2. أدخل Package name: `com.onewayegypt.app` (وأضف بصمات SHA-1/SHA-256 من الخطوة 3).
-3. حمّل ملف `google-services.json` الجديد واستبدل به `android/app/google-services.json` (ونفس الخطوة لـ iOS مع `GoogleService-Info.plist` عند النشر على App Store).
+تم اعتماد معرّف التطبيق الرسمي **`com.onewayegypt.app`** وربطه بالفعل داخل `android/app/google-services.json` (مشروع `oneway-f665d`).
+> **مهم جداً لعمل Google Sign-In في نسخة المتجر:**
+1. بعد إنشاء مفتاح الرفع (`upload-keystore.jks`) وتفعيل **Play App Signing** في Google Play Console، أضف بصمات `SHA-1` و`SHA-256` لكلٍ من **Upload key** و**App signing key** داخل **Firebase Console → Project Settings → Your Apps (`com.onewayegypt.app`)**.
+2. حمّل ملف `google-services.json` المحدّث واستبدله بـ `android/app/google-services.json` قبل بناء النسخة النهائية.
 
 ---
 
