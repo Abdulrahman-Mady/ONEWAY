@@ -1,0 +1,21 @@
+{
+  "name": "cloud-functions",
+  "description": "ONEWAY Firebase Cloud Functions",
+  "dependencies": {
+    "firebase-admin": "^12.6.0",
+    "firebase-functions": "^5.1.0"
+  },
+  "devDependencies": {
+    "eslint": "^8.57.0"
+  },
+  "scripts": {
+    "serve": "firebase -P oneway-f665d emulators:start --only functions",
+    "shell": "firebase -P oneway-f665d functions:shell",
+    "start": "npm run shell",
+    "logs": "firebase -P oneway-f665d functions:log"
+  },
+  "engines": {
+    "node": "22"
+  },
+  "private": true
+}

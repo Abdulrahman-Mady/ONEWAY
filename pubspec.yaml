@@ -1,0 +1,117 @@
+name: one_way_egypt
+description: A new Flutter project.
+
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  flutter_web_plugins:
+    sdk: flutter
+  auto_size_text: ^3.0.0
+  cached_network_image: ^3.4.1
+  cloud_firestore: ^5.6.5
+  cloud_functions: ^5.5.0
+  collection: ^1.19.0
+  dropdown_button2: 
+    git:
+      url: https://github.com/FlutterFlow/dropdown_button2.git
+      ref: 514178337dfbea442f617daed39c704b57593fc9
+      path: packages/dropdown_button2
+  easy_debounce: ^2.0.1
+  firebase_auth: ^5.5.1
+  firebase_core: ^3.12.1
+  firebase_app_check: ^0.3.2+4
+  firebase_analytics: ^11.3.3
+  firebase_crashlytics: ^4.1.5
+  firebase_performance: ^0.10.1
+  fl_chart: ^0.70.2
+  flutter_animate: ^4.5.0
+  flutter_plugin_android_lifecycle: ^2.0.28
+  font_awesome_flutter: ^11.0.0
+  from_css_color: ^2.0.0
+  go_router: ^14.8.1
+  google_fonts: ^6.2.1
+  flutter_map: ^8.2.2
+  latlong2: ^0.9.1
+  google_sign_in: ^6.2.2
+  intl: ^0.20.3
+  json_path: ^0.7.2
+  page_transition: ^2.1.0
+  percent_indicator: ^4.2.2
+  plugin_platform_interface: ^2.1.8
+  provider: ^6.1.2
+  rxdart: ^0.27.7
+  flutter_riverpod: ^2.6.1
+  shared_preferences: ^2.5.2
+  sign_in_with_apple: ^6.1.4
+  stream_transform: ^2.1.0
+  timeago: ^3.7.0
+  url_launcher: ^6.3.1
+
+  image_picker: ^1.1.2
+  firebase_storage: ^12.4.4
+  speech_to_text: ^7.0.0
+  flutter_tts: ^4.2.0
+  geolocator: ^13.0.2
+  permission_handler: ^11.3.1
+  connectivity_plus: ^6.1.0
+
+  crypto: any
+  http: ^1.2.0
+  firebase_messaging: ^15.2.10
+  flutter_local_notifications: ^18.0.1
+  flutter_image_compress: ^2.5.1
+  geoflutterfire_plus: ^0.0.24
+dev_dependencies:
+  flutter_lints: ^4.0.0
+  lints: ^4.0.0
+  flutter_test:
+    sdk: flutter
+  integration_test:
+    sdk: flutter
+  flutter_launcher_icons: ^0.14.3
+
+flutter:
+  config:
+    enable-swift-package-manager: true
+    enable-uiscene-migration: false
+
+  uses-material-design: true
+
+  assets:
+    - assets/fonts/
+    - assets/images/
+    - assets/videos/
+    - assets/audios/
+    - assets/rive_animations/
+    - assets/pdfs/
+    - assets/jsons/
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/app_icon_1024.png"
+  adaptive_icon_background: "#0B2239"
+  adaptive_icon_foreground: "assets/images/app_icon_1024.png"
+  min_sdk_android: 21
+  remove_alpha_ios: true
+  web:
+    generate: true
+    image_path: "assets/images/app_icon_1024.png"
+    background_color: "#0F2B46"
+    theme_color: "#1A9E96"
+  windows:
+    generate: true
+    image_path: "assets/images/app_icon_1024.png"
+    icon_size: 48
+  macos:
+    generate: true
+    image_path: "assets/images/app_icon_1024.png"

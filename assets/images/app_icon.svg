@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0F172A;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#1E293B;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0F172A;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="accentGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#F59E0B;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#FBBF24;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#F59E0B;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="accessibilityGradient" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" style="stop-color:#06B6D4;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0EA5E9;stop-opacity:1" />
+    </linearGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="8" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background circle with gradient -->
+  <circle cx="256" cy="256" r="240" fill="url(#bgGradient)" stroke="url(#accentGradient)" stroke-width="4"/>
+
+  <!-- Subtle pattern overlay -->
+  <g opacity="0.08">
+    <path d="M0,0 L512,0 L512,512 L0,512 Z" fill="url(#accentGradient)"/>
+  </g>
+
+  <!-- Main accessibility/wheelchair icon - stylized -->
+  <g transform="translate(256, 256)" filter="url(#glow)">
+    <!-- Wheelchair body -->
+    <g fill="url(#accentGradient)">
+      <!-- Seat -->
+      <path d="M-50,-30 L50,-30 L40,-80 L-40,-80 Z" fill="url(#accentGradient)"/>
+      <!-- Backrest -->
+      <path d="M-50,-80 L50,-80 L50,-120 L-50,-120 Z" fill="url(#accentGradient)"/>
+      <!-- Large rear wheel -->
+      <circle cx="55" cy="-5" r="32" stroke="url(#accentGradient)" stroke-width="6" fill="none"/>
+      <circle cx="55" cy="-5" r="18" fill="url(#accessibilityGradient)"/>
+      <circle cx="55" cy="-5" r="8" fill="#0F172A"/>
+      <!-- Small front wheel -->
+      <circle cx="-45" cy="20" r="16" stroke="url(#accentGradient)" stroke-width="4" fill="none"/>
+      <circle cx="-45" cy="20" r="10" fill="url(#accessibilityGradient)"/>
+      <circle cx="-45" cy="20" r="4" fill="#0F172A"/>
+      <!-- Connecting frame -->
+      <path d="M-45,20 L-30,-20 L30,-20 L55,-5" stroke="url(#accentGradient)" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      <!-- Footrest -->
+      <path d="M-55,15 L-65,35" stroke="url(#accentGradient)" stroke-width="5" fill="none" stroke-linecap="round"/>
+    </g>
+
+    <!-- Location pin / map marker integrated -->
+    <g transform="translate(-80, -130)" fill="url(#accentGradient)">
+      <path d="M0,-10 C0,-25 15,-35 15,-35 S15,-10 15,-10 C15,-10 0,-10 0,-10 Z" fill="url(#accentGradient)"/>
+      <circle cx="7.5" cy="-22" r="4" fill="#0F172A"/>
+    </g>
+
+    <!-- Pulse/wave rings indicating accessibility reach -->
+    <g opacity="0.3" stroke="url(#accessibilityGradient)" stroke-width="2" fill="none">
+      <circle cx="0" cy="0" r="90"/>
+      <circle cx="0" cy="0" r="110"/>
+      <circle cx="0" cy="0" r="130"/>
+    </g>
+  </g>
+
+  <!-- "ONE" text indicator at bottom -->
+  <text x="256" y="430" font-family="system-ui, sans-serif" font-size="28" font-weight="bold" fill="url(#accentGradient)" text-anchor="middle" letter-spacing="4">ONE WAY</text>
+</svg>

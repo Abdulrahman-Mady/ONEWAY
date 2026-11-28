@@ -1,0 +1,98 @@
+{
+  "project_info": {
+    "project_number": "977208268825",
+    "project_id": "oneway-f665d",
+    "storage_bucket": "oneway-f665d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:977208268825:android:37eddd625bc6cba9b07288",
+        "android_client_info": {
+          "package_name": "com.mycompany.onewayegypt"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "977208268825-andtvncqg7nh198vq7rfrtpjplb9i1v1.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.mycompany.onewayegypt",
+            "certificate_hash": "9bbb3186b2189ef16d8f272bdab59362c395cbb4"
+          }
+        },
+        {
+          "client_id": "977208268825-cf8dd4317ladp4blge3ddhl7ffuhqrid.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.mycompany.onewayegypt",
+            "certificate_hash": "99948330f704e746c3ce77a61b48d0e0e4d5d4aa"
+          }
+        },
+        {
+          "client_id": "977208268825-asealapo7sea2qn794bl7nflutouevd1.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAlPysBpMCCxLcvOhkeBlf9MiSEikIoens"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "977208268825-asealapo7sea2qn794bl7nflutouevd1.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "977208268825-rl0583nfk8dtr2hboqvr45eeql43ok4l.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.mycompany.onewayegypt"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:977208268825:android:e289c104af9d8538b07288",
+        "android_client_info": {
+          "package_name": "com.onewayegypt.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "977208268825-asealapo7sea2qn794bl7nflutouevd1.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAlPysBpMCCxLcvOhkeBlf9MiSEikIoens"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "977208268825-asealapo7sea2qn794bl7nflutouevd1.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "977208268825-rl0583nfk8dtr2hboqvr45eeql43ok4l.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.mycompany.onewayegypt"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

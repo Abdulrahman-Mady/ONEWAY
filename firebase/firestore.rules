@@ -1,0 +1,1425 @@
+rules_version = '2';
+
+// ============================================================================
+// Assumed Data Model (ONEWAY / Accessible Egypt)
+// ============================================================================
+//
+// Canonical Access Model (No Guest / Anonymous Access):
+//   - Anonymous / guest Firebase Auth sessions (sign_in_provider == 'anonymous')
+//     and unauthenticated requests are completely blocked across ALL collections.
+//   - 'user': Registered non-anonymous user (browse verified places & published
+//     reviews, submit reviews, favorite places, submit detailed community place
+//     suggestions, report barriers on registered places, manage emergency contacts).
+//   - 'businessOwner': Place Owner (submit/claim/edit owned business & venue
+//     accessibility metadata, view barrier reports linked to their business,
+//     request field assessments). Newly submitted applicants (whose user role is
+//     still 'user' until approved) may read and edit their own pending/rejected
+//     business document where resource.data.ownerId == request.auth.uid.
+//   - 'admin' (with 'superAdmin' root compatibility; 'moderator' supported via
+//     isModerator()): Full moderation, verification, role/suspension management,
+//     and place governance.
+//
+// Collection: users/{userId}
+//   - uid: string (optional on merge-create, immutable once set, == userId)
+//   - role: string ('user' on create; enum: user | businessOwner | moderator | admin | superAdmin; immutable for non-admins)
+//   - email: string (optional/nullable, <= 254 chars; '' allowed on account scrub)
+//   - display_name: string (optional/nullable, <= 120 chars)
+//   - photo_url: string (optional/nullable, <= 2048 chars, http(s) URL or '')
+//   - phone_number: string (optional/nullable, <= 32 chars)
+//   - gender: string (optional/nullable, <= 40 chars)
+//   - birth_date: timestamp (optional/nullable)
+//   - address: string (optional/nullable, <= 300 chars)
+//   - governorate: string (optional/nullable, <= 80 chars)
+//   - mobility_type: string (optional/nullable, <= 80 chars)
+//   - access_needs: list<string> (optional/nullable, <= 10 non-empty strings, each <= 120 chars)
+//   - profile_completed: bool (optional/nullable)
+//   - email_verified: bool (optional/nullable)
+//   - phone_verified: bool (optional/nullable)
+//   - business_application_id: string (optional/nullable, <= 120 chars)
+//   - business_application_status: string (optional/nullable, <= 60 chars)
+//   - business_status: string (optional/nullable, <= 60 chars)
+//   - has_uploaded_place: bool (optional/nullable)
+//   - fcm_tokens: list<string> (optional/nullable, <= 10 non-empty tokens, each <= 512 chars)
+//   - suspended: bool (optional/nullable; admin/superAdmin managed only)
+//   - suspension_reason: string (optional/nullable, <= 500 chars; admin/superAdmin managed only)
+//   - created_time: timestamp (optional/nullable, immutable on update)
+//   - updated_time: timestamp (optional/nullable)
+//
+// Collection: places/{placeId}
+//   - name: string (required, 1..200 chars)
+//   - category: string (required, 1..100 chars)
+//   - description: string (optional/nullable, <= 3000 chars)
+//   - photo_url, entrance_photo_url, elevator_photo_url, restroom_photo_url: string (optional/nullable, <= 2048 chars, http(s) URL or '')
+//   - photos: list<string> (optional/nullable, <= 20 URLs)
+//   - address: string (optional/nullable, <= 300 chars)
+//   - governorate, city: string (optional/nullable, <= 100 chars)
+//   - location: latlng (optional/nullable)
+//   - geo: map { geohash: string (1..20 chars), geopoint: latlng } (optional/nullable)
+//   - phone_number: string (optional/nullable, <= 40 chars)
+//   - website: string (optional/nullable, <= 500 chars)
+//   - opening_hours: string (optional/nullable, <= 200 chars)
+//   - accessibility_features: map (optional/nullable, validated keys)
+//   - amenities: list<string> (optional/nullable, <= 30 non-empty strings, each <= 120 chars)
+//   - data_source: string (optional/nullable, <= 64 chars; admin managed)
+//   - external_id: string (optional/nullable, <= 128 chars; admin managed)
+//   - verification_status: string (optional/nullable, enum: verified | needsUpdate | pending | rejected | unverified)
+//   - verification_evidence: string (optional/nullable, <= 2000 chars)
+//   - verified_by: string (optional/nullable, <= 254 chars)
+//   - last_verified_at, created_at, updated_at: timestamp (optional/nullable; created_at immutable)
+//   - rating: number (optional/nullable, 0..5)
+//   - review_count: int (optional/nullable, >= 0)
+//   - business_id: string (optional/nullable, <= 128 chars)
+//
+// Collection: businesses/{businessId}
+//   - ownerId: string (required, immutable, == auth.uid on create)
+//   - business_name / businessName: string (required, 1..200 chars)
+//   - category: string (required, 1..100 chars)
+//   - status: string (optional if verificationStatus set; 'pending' on create, enum: pending | active | verified | approved | rejected | suspended)
+//   - verificationStatus / verification_status: string (optional if status set; 'pending' on create, enum: pending | verified | approved | active | rejected | suspended | unverified | needsUpdate)
+//   - subscription_tier: string (optional/nullable, 'free' on create, enum: free | basic | pro | premium | enterprise)
+//   - phone_number, phoneNumber, ownerPhone, owner_phone: string (optional/nullable, <= 40 chars)
+//   - email, ownerEmail, owner_email: string (optional/nullable, <= 254 chars)
+//   - ownerName, owner_name: string (optional/nullable, <= 150 chars)
+//   - description: string (optional/nullable, <= 3000 chars)
+//   - address: string (optional/nullable, <= 500 chars)
+//   - governorate, city: string (optional/nullable, <= 100 chars)
+//   - opening_hours, openingHours: string (optional/nullable, <= 200 chars)
+//   - website: string (optional/nullable, <= 500 chars)
+//   - location: latlng (optional/nullable)
+//   - geo: map { geohash, geopoint } (optional/nullable)
+//   - workingHours, working_hours: map (optional/nullable, <= 14 keys)
+//   - services: list (optional/nullable, <= 30 items)
+//   - accessibility_features: map (optional/nullable, validated keys)
+//   - amenities: list<string> (optional/nullable, <= 30 non-empty strings, each <= 120 chars)
+//   - photo_url, photoUrl, entrance_photo_url, entrancePhotoUrl, elevator_photo_url, elevatorPhotoUrl,
+//     restroom_photo_url, restroomPhotoUrl, logoUrl, logo_url: string (optional/nullable, <= 2048 chars, http(s) URL or '')
+//   - photos, imageUrls, image_urls: list<string> (optional/nullable, <= 20 URLs)
+//   - branch_place_ids: list<string> (optional/nullable, <= 50 items)
+//   - has_pending_edits: bool (optional/nullable)
+//   - pending_edits: map (optional/nullable, <= 30 keys)
+//   - last_edit_summary: string (optional/nullable, <= 1000 chars)
+//   - claimed_existing_place_id: string (optional/nullable, <= 128 chars; set on claim creation)
+//   - admin_notes, rejection_reason, suspension_reason: string (optional/nullable, <= 2000 chars; admin/moderator only)
+//   - verified_by, verifiedBy: string (optional/nullable, <= 254 chars; admin/moderator only)
+//   - created_at, updated_at, submittedAt, approved_at, rejected_at, suspended_at, verified_at, verifiedAt: timestamp (optional/nullable)
+//
+// Collection: placeSubmissions/{submissionId}
+//   - place_name: string (required, 1..150 chars)
+//   - category: string (required, 1..80 chars)
+//   - submittedBy: string (required, immutable, == auth.uid on create)
+//   - status: string (required, 'pending' on create, enum: pending | new | underReview | approved | rejected)
+//   - created_at: timestamp (required on create, immutable on update)
+//   - description: string (optional/nullable, <= 2000 chars)
+//   - address: string (optional/nullable, <= 500 chars)
+//   - governorate, city: string (optional/nullable, <= 100 chars)
+//   - phone_number: string (optional/nullable, <= 40 chars)
+//   - opening_hours: string (optional/nullable, <= 200 chars)
+//   - website: string (optional/nullable, <= 500 chars)
+//   - location: latlng (optional/nullable)
+//   - geo: map { geohash, geopoint } (optional/nullable)
+//   - photo_url, entrance_photo_url, entrancePhotoUrl, elevator_photo_url, elevatorPhotoUrl,
+//     restroom_photo_url, restroomPhotoUrl: string (optional/nullable, <= 1500 chars, http(s) URL or '')
+//   - photos: list<string> (optional/nullable, <= 15 URLs)
+//   - accessibility_features: map (optional/nullable, validated keys)
+//   - amenities: list<string> (optional/nullable, <= 30 non-empty strings, each <= 120 chars)
+//   - submitter_name: string (optional/nullable, <= 150 chars)
+//   - submitter_email: string (optional/nullable, <= 200 chars)
+//   - submitter_phone: string (optional/nullable, <= 40 chars)
+//   - source: string (optional/nullable, <= 60 chars)
+//   - reviewed_by: string (optional/nullable, <= 254 chars; admin/moderator only)
+//   - reviewed_at, updated_at: timestamp (optional/nullable)
+//   - admin_notes, rejection_reason: string (optional/nullable, <= 2000 chars; admin/moderator only)
+//   - published_place_id: string (optional/nullable, <= 128 chars; admin/moderator only)
+//
+// Collection: accessibilityReports/{reportId}
+//   - createdBy: string (required, immutable, == auth.uid on create)
+//   - place_id: string (required, immutable, 1..128 chars; MUST exist in /places/{place_id} on create)
+//   - business_id: string (optional/nullable, immutable, <= 128 chars; if non-empty on create, must match places/{place_id}.business_id)
+//   - status: string (required, 'new' on create, enum: new | underReview | needsMoreInformation | verified | resolved | rejected)
+//   - description: string (required, 1..3000 chars)
+//   - place_name: string (optional/nullable, <= 200 chars)
+//   - user_name: string (optional/nullable, <= 120 chars)
+//   - problemCategory: string (optional/nullable, <= 120 chars)
+//   - photo_urls: list<string> (optional/nullable, <= 10 http(s) URLs, each <= 2048 chars)
+//   - location: latlng (optional/nullable)
+//   - user_notes: string (optional/nullable, <= 2000 chars)
+//   - admin_notes: string (optional/nullable, <= 2000 chars; admin only, cleared on reporter resubmission)
+//   - previous_admin_notes: string (optional/nullable, <= 2000 chars; archived admin question when resubmitted)
+//   - created_at, updated_at: timestamp (optional/nullable)
+//
+// Collection: reviews/{reviewId}
+//   - place_id: string (required, immutable, 1..128 chars)
+//   - createdBy: string (required, immutable, == auth.uid on create)
+//   - user_name: string (optional/nullable, <= 120 chars)
+//   - rating: number (required, 1.0..5.0)
+//   - comment: string (required, 1..2000 chars)
+//   - status: string (required, 'published' on create, enum: published | hidden | flagged | removed | pending)
+//   - created_at, updated_at: timestamp (optional/nullable)
+//
+// Collection: favorites/{favoriteId}, notifications/{notificationId},
+//   emergencyContacts/{contactId}, auditLogs/{logId}, admin_notifications/{notificationId},
+//   field_assessment_requests/{requestId}, business_applications/{appId},
+//   routeReports/{reportId}, conversations/{conversationId}/messages/{messageId},
+//   subscriptions/{subscriptionId}, verificationCodes/{email}
+// ============================================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ========================================================================
+    // Authentication & Role Helper Functions
+    // ========================================================================
+
+    // Strictly blocks unauthenticated AND anonymous/guest Firebase Auth sessions.
+    function isSignedIn() {
+      return request.auth != null &&
+        (!('firebase' in request.auth.token) ||
+         !('sign_in_provider' in request.auth.token.firebase) ||
+         request.auth.token.firebase.sign_in_provider != 'anonymous');
+    }
+
+    function isRegisteredUser() {
+      return isSignedIn();
+    }
+
+    function isOwner(userId) {
+      return isRegisteredUser() && request.auth.uid == userId;
+    }
+
+    function hasUserDoc() {
+      return isRegisteredUser() &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function getUserRole() {
+      return hasUserDoc() ? getUserData().get('role', '') : '';
+    }
+
+    function isSuperAdmin() {
+      return isRegisteredUser() && (
+        ('superAdmin' in request.auth.token && request.auth.token.superAdmin == true) ||
+        ('role' in request.auth.token && request.auth.token.role == 'superAdmin') ||
+        getUserRole() == 'superAdmin'
+      );
+    }
+
+    function isAdmin() {
+      return isSuperAdmin() || (
+        isRegisteredUser() && (
+          ('role' in request.auth.token && request.auth.token.role == 'admin') ||
+          getUserRole() == 'admin'
+        )
+      );
+    }
+
+    function isModerator() {
+      return isAdmin() || (
+        isRegisteredUser() && (
+          ('role' in request.auth.token && request.auth.token.role == 'moderator') ||
+          getUserRole() == 'moderator'
+        )
+      );
+    }
+
+    function isBusinessOwner() {
+      return isRegisteredUser() && (
+        ('role' in request.auth.token && request.auth.token.role == 'businessOwner') ||
+        getUserRole() == 'businessOwner'
+      );
+    }
+
+    function isBusinessOwnerOf(businessId) {
+      return isRegisteredUser() &&
+        businessId is string &&
+        businessId.size() > 0 &&
+        exists(/databases/$(database)/documents/businesses/$(businessId)) &&
+        get(/databases/$(database)/documents/businesses/$(businessId)).data.ownerId == request.auth.uid;
+    }
+
+    // ========================================================================
+    // Generic Validation Helper Functions
+    // ========================================================================
+
+    function hasOnlyAllowedFields(data, fields) {
+      return data.keys().hasOnly(fields);
+    }
+
+    function areImmutableFieldsUnchanged(fields) {
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny(fields);
+    }
+
+    function isNonEmptyString(val, maxLen) {
+      return val is string && val.size() > 0 && val.size() <= maxLen;
+    }
+
+    function isOptionalString(data, field, maxLen) {
+      return !(field in data) ||
+        data[field] == null ||
+        (data[field] is string && data[field].size() <= maxLen);
+    }
+
+    function isOptionalUrl(data, field, maxLen) {
+      return !(field in data) ||
+        data[field] == null ||
+        (data[field] is string &&
+         data[field].size() <= maxLen &&
+         (data[field] == '' || data[field].matches('^https?://.*')));
+    }
+
+    function isOptionalBool(data, field) {
+      return !(field in data) ||
+        data[field] == null ||
+        data[field] is bool;
+    }
+
+    function isOptionalTimestamp(data, field) {
+      return !(field in data) ||
+        data[field] == null ||
+        data[field] is timestamp;
+    }
+
+    function isOptionalLatLng(data, field) {
+      return !(field in data) ||
+        data[field] == null ||
+        data[field] is latlng;
+    }
+
+    function isOptionalList(data, field, maxSize) {
+      return !(field in data) ||
+        data[field] == null ||
+        (data[field] is list && data[field].size() <= maxSize);
+    }
+
+    function isOptionalMap(data, field, maxKeys) {
+      return !(field in data) ||
+        data[field] == null ||
+        (data[field] is map && data[field].size() <= maxKeys);
+    }
+
+    // Deep element validator for bounded string lists
+    function isValidBoundedStringAt(items, idx, maxLen) {
+      return items.size() <= idx ||
+        (items[idx] is string && items[idx].size() > 0 && items[idx].size() <= maxLen);
+    }
+
+    function isValidAccessNeeds(needs) {
+      return needs is list &&
+        needs.size() <= 10 &&
+        isValidBoundedStringAt(needs, 0, 120) &&
+        isValidBoundedStringAt(needs, 1, 120) &&
+        isValidBoundedStringAt(needs, 2, 120) &&
+        isValidBoundedStringAt(needs, 3, 120) &&
+        isValidBoundedStringAt(needs, 4, 120) &&
+        isValidBoundedStringAt(needs, 5, 120) &&
+        isValidBoundedStringAt(needs, 6, 120) &&
+        isValidBoundedStringAt(needs, 7, 120) &&
+        isValidBoundedStringAt(needs, 8, 120) &&
+        isValidBoundedStringAt(needs, 9, 120);
+    }
+
+    function isOptionalAccessNeeds(data) {
+      return !('access_needs' in data) ||
+        data.access_needs == null ||
+        isValidAccessNeeds(data.access_needs);
+    }
+
+    function isValidFcmTokens(tokens) {
+      return tokens is list &&
+        tokens.size() <= 10 &&
+        isValidBoundedStringAt(tokens, 0, 512) &&
+        isValidBoundedStringAt(tokens, 1, 512) &&
+        isValidBoundedStringAt(tokens, 2, 512) &&
+        isValidBoundedStringAt(tokens, 3, 512) &&
+        isValidBoundedStringAt(tokens, 4, 512) &&
+        isValidBoundedStringAt(tokens, 5, 512) &&
+        isValidBoundedStringAt(tokens, 6, 512) &&
+        isValidBoundedStringAt(tokens, 7, 512) &&
+        isValidBoundedStringAt(tokens, 8, 512) &&
+        isValidBoundedStringAt(tokens, 9, 512);
+    }
+
+    function isOptionalFcmTokens(data) {
+      return !('fcm_tokens' in data) ||
+        data.fcm_tokens == null ||
+        isValidFcmTokens(data.fcm_tokens);
+    }
+
+    function isValidUrlAt(items, idx, maxLen) {
+      return items.size() <= idx ||
+        (items[idx] is string &&
+         items[idx].size() > 0 &&
+         items[idx].size() <= maxLen &&
+         items[idx].matches('^https?://.*'));
+    }
+
+    function isOptionalPhotoUrlList(data, field) {
+      return !(field in data) ||
+        data[field] == null ||
+        (data[field] is list &&
+         data[field].size() <= 10 &&
+         isValidUrlAt(data[field], 0, 2048) &&
+         isValidUrlAt(data[field], 1, 2048) &&
+         isValidUrlAt(data[field], 2, 2048) &&
+         isValidUrlAt(data[field], 3, 2048) &&
+         isValidUrlAt(data[field], 4, 2048) &&
+         isValidUrlAt(data[field], 5, 2048) &&
+         isValidUrlAt(data[field], 6, 2048) &&
+         isValidUrlAt(data[field], 7, 2048) &&
+         isValidUrlAt(data[field], 8, 2048) &&
+         isValidUrlAt(data[field], 9, 2048));
+    }
+
+    function isOptionalPhotoUrlList15(data, field) {
+      return !(field in data) ||
+        data[field] == null ||
+        (data[field] is list &&
+         data[field].size() <= 15 &&
+         isValidUrlAt(data[field], 0, 1500) &&
+         isValidUrlAt(data[field], 1, 1500) &&
+         isValidUrlAt(data[field], 2, 1500) &&
+         isValidUrlAt(data[field], 3, 1500) &&
+         isValidUrlAt(data[field], 4, 1500) &&
+         isValidUrlAt(data[field], 5, 1500) &&
+         isValidUrlAt(data[field], 6, 1500) &&
+         isValidUrlAt(data[field], 7, 1500) &&
+         isValidUrlAt(data[field], 8, 1500) &&
+         isValidUrlAt(data[field], 9, 1500) &&
+         isValidUrlAt(data[field], 10, 1500) &&
+         isValidUrlAt(data[field], 11, 1500) &&
+         isValidUrlAt(data[field], 12, 1500) &&
+         isValidUrlAt(data[field], 13, 1500) &&
+         isValidUrlAt(data[field], 14, 1500));
+    }
+
+    function isOptionalPhotoUrlList20(data, field) {
+      return !(field in data) ||
+        data[field] == null ||
+        (data[field] is list &&
+         data[field].size() <= 20 &&
+         isValidUrlAt(data[field], 0, 2048) &&
+         isValidUrlAt(data[field], 1, 2048) &&
+         isValidUrlAt(data[field], 2, 2048) &&
+         isValidUrlAt(data[field], 3, 2048) &&
+         isValidUrlAt(data[field], 4, 2048) &&
+         isValidUrlAt(data[field], 5, 2048) &&
+         isValidUrlAt(data[field], 6, 2048) &&
+         isValidUrlAt(data[field], 7, 2048) &&
+         isValidUrlAt(data[field], 8, 2048) &&
+         isValidUrlAt(data[field], 9, 2048) &&
+         isValidUrlAt(data[field], 10, 2048) &&
+         isValidUrlAt(data[field], 11, 2048) &&
+         isValidUrlAt(data[field], 12, 2048) &&
+         isValidUrlAt(data[field], 13, 2048) &&
+         isValidUrlAt(data[field], 14, 2048) &&
+         isValidUrlAt(data[field], 15, 2048) &&
+         isValidUrlAt(data[field], 16, 2048) &&
+         isValidUrlAt(data[field], 17, 2048) &&
+         isValidUrlAt(data[field], 18, 2048) &&
+         isValidUrlAt(data[field], 19, 2048));
+    }
+
+    function isValidParticipantIds(ids) {
+      return ids is list &&
+        ids.size() >= 1 &&
+        ids.size() <= 10 &&
+        isValidBoundedStringAt(ids, 0, 128) &&
+        isValidBoundedStringAt(ids, 1, 128) &&
+        isValidBoundedStringAt(ids, 2, 128) &&
+        isValidBoundedStringAt(ids, 3, 128) &&
+        isValidBoundedStringAt(ids, 4, 128) &&
+        isValidBoundedStringAt(ids, 5, 128) &&
+        isValidBoundedStringAt(ids, 6, 128) &&
+        isValidBoundedStringAt(ids, 7, 128) &&
+        isValidBoundedStringAt(ids, 8, 128) &&
+        isValidBoundedStringAt(ids, 9, 128);
+    }
+
+    // ========================================================================
+    // Domain Validators (Called on BOTH create and update)
+    // ========================================================================
+
+    function isValidUser(data) {
+      return hasOnlyAllowedFields(data, [
+          'email', 'display_name', 'photo_url', 'uid', 'phone_number',
+          'role', 'created_time', 'updated_time', 'email_verified', 'phone_verified',
+          'gender', 'birth_date', 'address', 'governorate', 'mobility_type',
+          'access_needs', 'profile_completed',
+          'business_application_id', 'business_application_status', 'business_status',
+          'has_uploaded_place', 'fcm_tokens',
+          'suspended', 'suspension_reason'
+        ]) &&
+        (!('uid' in data) || isNonEmptyString(data.uid, 128)) &&
+        (!('role' in data) ||
+         (data.role is string &&
+          data.role in ['user', 'businessOwner', 'moderator', 'admin', 'superAdmin'])) &&
+        isOptionalString(data, 'email', 254) &&
+        isOptionalString(data, 'display_name', 120) &&
+        isOptionalUrl(data, 'photo_url', 2048) &&
+        isOptionalString(data, 'phone_number', 32) &&
+        isOptionalTimestamp(data, 'created_time') &&
+        isOptionalTimestamp(data, 'updated_time') &&
+        isOptionalBool(data, 'email_verified') &&
+        isOptionalBool(data, 'phone_verified') &&
+        isOptionalString(data, 'gender', 40) &&
+        isOptionalTimestamp(data, 'birth_date') &&
+        isOptionalString(data, 'address', 300) &&
+        isOptionalString(data, 'governorate', 80) &&
+        isOptionalString(data, 'mobility_type', 80) &&
+        isOptionalAccessNeeds(data) &&
+        isOptionalBool(data, 'profile_completed') &&
+        isOptionalString(data, 'business_application_id', 120) &&
+        isOptionalString(data, 'business_application_status', 60) &&
+        isOptionalString(data, 'business_status', 60) &&
+        isOptionalBool(data, 'has_uploaded_place') &&
+        isOptionalFcmTokens(data) &&
+        isOptionalBool(data, 'suspended') &&
+        isOptionalString(data, 'suspension_reason', 500);
+    }
+
+    function isValidRoleUpdate(allowedRoles) {
+      let changed = request.resource.data.diff(resource.data).affectedKeys();
+      return changed.hasOnly([
+          'role', 'suspended', 'suspension_reason',
+          'business_application_status', 'business_status', 'has_uploaded_place',
+          'updated_time'
+        ]) &&
+        (!changed.hasAny(['role']) ||
+         ('role' in request.resource.data &&
+          request.resource.data.role is string &&
+          request.resource.data.role in allowedRoles)) &&
+        isOptionalBool(request.resource.data, 'suspended') &&
+        isOptionalString(request.resource.data, 'suspension_reason', 500) &&
+        isOptionalString(request.resource.data, 'business_application_status', 60) &&
+        isOptionalString(request.resource.data, 'business_status', 60) &&
+        isOptionalBool(request.resource.data, 'has_uploaded_place') &&
+        isOptionalTimestamp(request.resource.data, 'updated_time');
+    }
+
+    function isOptionalGeo(data) {
+      return !('geo' in data) ||
+        data.geo == null ||
+        (data.geo is map &&
+         data.geo.keys().hasOnly(['geohash', 'geopoint']) &&
+         'geohash' in data.geo &&
+         'geopoint' in data.geo &&
+         isNonEmptyString(data.geo.geohash, 20) &&
+         data.geo.geopoint is latlng);
+    }
+
+    function isOptionalAccessibilityFeatures(data) {
+      return !('accessibility_features' in data) ||
+        data.accessibility_features == null ||
+        (data.accessibility_features is map &&
+         data.accessibility_features.keys().hasOnly([
+           'wheelchairEntrance', 'ramp', 'suitableElevator',
+           'accessibleRestroom', 'accessibleParking',
+           'corridorWidth', 'entranceObstacles',
+           'brailleSignage', 'audioGuidance', 'tactilePaving',
+           'handrails', 'staffAssistance', 'visualAlerts',
+           'signLanguage', 'quietSpace', 'notes'
+         ]) &&
+         isOptionalBool(data.accessibility_features, 'wheelchairEntrance') &&
+         isOptionalBool(data.accessibility_features, 'ramp') &&
+         isOptionalBool(data.accessibility_features, 'suitableElevator') &&
+         isOptionalBool(data.accessibility_features, 'accessibleRestroom') &&
+         isOptionalBool(data.accessibility_features, 'accessibleParking') &&
+         isOptionalString(data.accessibility_features, 'corridorWidth', 200) &&
+         isOptionalString(data.accessibility_features, 'entranceObstacles', 500) &&
+         isOptionalBool(data.accessibility_features, 'brailleSignage') &&
+         isOptionalBool(data.accessibility_features, 'audioGuidance') &&
+         isOptionalBool(data.accessibility_features, 'tactilePaving') &&
+         isOptionalBool(data.accessibility_features, 'handrails') &&
+         isOptionalBool(data.accessibility_features, 'staffAssistance') &&
+         isOptionalBool(data.accessibility_features, 'visualAlerts') &&
+         isOptionalBool(data.accessibility_features, 'signLanguage') &&
+         isOptionalBool(data.accessibility_features, 'quietSpace') &&
+         isOptionalString(data.accessibility_features, 'notes', 500));
+    }
+
+    function isOptionalAmenities(data) {
+      return !('amenities' in data) ||
+        data.amenities == null ||
+        (data.amenities is list &&
+         data.amenities.size() <= 30 &&
+         isValidBoundedStringAt(data.amenities, 0, 120) &&
+         isValidBoundedStringAt(data.amenities, 1, 120) &&
+         isValidBoundedStringAt(data.amenities, 2, 120) &&
+         isValidBoundedStringAt(data.amenities, 3, 120) &&
+         isValidBoundedStringAt(data.amenities, 4, 120) &&
+         isValidBoundedStringAt(data.amenities, 5, 120) &&
+         isValidBoundedStringAt(data.amenities, 6, 120) &&
+         isValidBoundedStringAt(data.amenities, 7, 120) &&
+         isValidBoundedStringAt(data.amenities, 8, 120) &&
+         isValidBoundedStringAt(data.amenities, 9, 120) &&
+         isValidBoundedStringAt(data.amenities, 10, 120) &&
+         isValidBoundedStringAt(data.amenities, 11, 120) &&
+         isValidBoundedStringAt(data.amenities, 12, 120) &&
+         isValidBoundedStringAt(data.amenities, 13, 120) &&
+         isValidBoundedStringAt(data.amenities, 14, 120) &&
+         isValidBoundedStringAt(data.amenities, 15, 120) &&
+         isValidBoundedStringAt(data.amenities, 16, 120) &&
+         isValidBoundedStringAt(data.amenities, 17, 120) &&
+         isValidBoundedStringAt(data.amenities, 18, 120) &&
+         isValidBoundedStringAt(data.amenities, 19, 120) &&
+         isValidBoundedStringAt(data.amenities, 20, 120) &&
+         isValidBoundedStringAt(data.amenities, 21, 120) &&
+         isValidBoundedStringAt(data.amenities, 22, 120) &&
+         isValidBoundedStringAt(data.amenities, 23, 120) &&
+         isValidBoundedStringAt(data.amenities, 24, 120) &&
+         isValidBoundedStringAt(data.amenities, 25, 120) &&
+         isValidBoundedStringAt(data.amenities, 26, 120) &&
+         isValidBoundedStringAt(data.amenities, 27, 120) &&
+         isValidBoundedStringAt(data.amenities, 28, 120) &&
+         isValidBoundedStringAt(data.amenities, 29, 120));
+    }
+
+    function isValidPlace(data) {
+      return hasOnlyAllowedFields(data, [
+          'name', 'category', 'description', 'photo_url', 'photos',
+          'entrance_photo_url', 'elevator_photo_url', 'restroom_photo_url',
+          'address', 'governorate', 'city', 'location', 'geo',
+          'phone_number', 'website', 'opening_hours', 'accessibility_features',
+          'amenities', 'data_source', 'external_id',
+          'verification_status', 'verified_by', 'last_verified_at',
+          'verification_evidence', 'rating', 'review_count',
+          'created_at', 'updated_at', 'business_id'
+        ]) &&
+        'name' in data && isNonEmptyString(data.name, 200) &&
+        'category' in data && isNonEmptyString(data.category, 100) &&
+        isOptionalString(data, 'description', 3000) &&
+        isOptionalUrl(data, 'photo_url', 2048) &&
+        isOptionalPhotoUrlList20(data, 'photos') &&
+        isOptionalUrl(data, 'entrance_photo_url', 2048) &&
+        isOptionalUrl(data, 'elevator_photo_url', 2048) &&
+        isOptionalUrl(data, 'restroom_photo_url', 2048) &&
+        isOptionalString(data, 'address', 500) &&
+        isOptionalString(data, 'governorate', 100) &&
+        isOptionalString(data, 'city', 100) &&
+        isOptionalLatLng(data, 'location') &&
+        isOptionalGeo(data) &&
+        isOptionalString(data, 'phone_number', 40) &&
+        isOptionalString(data, 'website', 500) &&
+        isOptionalString(data, 'opening_hours', 200) &&
+        isOptionalAccessibilityFeatures(data) &&
+        isOptionalAmenities(data) &&
+        isOptionalString(data, 'data_source', 64) &&
+        isOptionalString(data, 'external_id', 128) &&
+        (!('verification_status' in data) ||
+         data.verification_status == null ||
+         (data.verification_status is string &&
+          data.verification_status in ['verified', 'needsUpdate', 'pending', 'rejected', 'unverified'])) &&
+        isOptionalString(data, 'verified_by', 254) &&
+        isOptionalTimestamp(data, 'last_verified_at') &&
+        isOptionalString(data, 'verification_evidence', 2000) &&
+        (!('rating' in data) || data.rating == null ||
+         (data.rating is number && data.rating >= 0 && data.rating <= 5)) &&
+        (!('review_count' in data) || data.review_count == null ||
+         (data.review_count is int && data.review_count >= 0)) &&
+        isOptionalTimestamp(data, 'created_at') &&
+        isOptionalTimestamp(data, 'updated_at') &&
+        isOptionalString(data, 'business_id', 128);
+    }
+
+    function isValidBusiness(data) {
+      return hasOnlyAllowedFields(data, [
+          'ownerId', 'business_name', 'businessName', 'category',
+          'phone_number', 'phoneNumber', 'email',
+          'status', 'verificationStatus', 'verification_status',
+          'subscription_tier', 'branch_place_ids',
+          'description', 'address', 'governorate', 'city',
+          'opening_hours', 'openingHours', 'website', 'location', 'geo',
+          'workingHours', 'working_hours', 'services',
+          'accessibility_features', 'amenities',
+          'ownerName', 'owner_name', 'ownerPhone', 'owner_phone', 'ownerEmail', 'owner_email',
+          'photo_url', 'photoUrl',
+          'entrance_photo_url', 'entrancePhotoUrl',
+          'elevator_photo_url', 'elevatorPhotoUrl',
+          'restroom_photo_url', 'restroomPhotoUrl',
+          'logoUrl', 'logo_url',
+          'photos', 'imageUrls', 'image_urls',
+          'has_pending_edits', 'pending_edits', 'last_edit_summary',
+          'claimed_existing_place_id',
+          'admin_notes', 'rejection_reason', 'suspension_reason',
+          'verified_by', 'verifiedBy', 'verified_at', 'verifiedAt',
+          'created_at', 'updated_at', 'submittedAt',
+          'approved_at', 'rejected_at', 'suspended_at'
+        ]) &&
+        'ownerId' in data && isNonEmptyString(data.ownerId, 128) &&
+        (('business_name' in data && isNonEmptyString(data.business_name, 200)) ||
+         ('businessName' in data && isNonEmptyString(data.businessName, 200))) &&
+        isOptionalString(data, 'business_name', 200) &&
+        isOptionalString(data, 'businessName', 200) &&
+        'category' in data && isNonEmptyString(data.category, 100) &&
+        (('status' in data && data.status is string) ||
+         ('verificationStatus' in data && data.verificationStatus is string) ||
+         ('verification_status' in data && data.verification_status is string)) &&
+        (!('status' in data) || data.status == null ||
+         (data.status is string &&
+          data.status in ['pending', 'active', 'verified', 'approved', 'rejected', 'suspended'])) &&
+        (!('verificationStatus' in data) || data.verificationStatus == null ||
+         (data.verificationStatus is string &&
+          data.verificationStatus in ['pending', 'verified', 'approved', 'active', 'rejected', 'suspended', 'unverified', 'needsUpdate'])) &&
+        (!('verification_status' in data) || data.verification_status == null ||
+         (data.verification_status is string &&
+          data.verification_status in ['pending', 'verified', 'approved', 'active', 'rejected', 'suspended', 'unverified', 'needsUpdate'])) &&
+        (!('subscription_tier' in data) || data.subscription_tier == null ||
+         (data.subscription_tier is string &&
+          data.subscription_tier in ['free', 'basic', 'pro', 'premium', 'enterprise'])) &&
+        isOptionalString(data, 'phone_number', 40) &&
+        isOptionalString(data, 'phoneNumber', 40) &&
+        isOptionalString(data, 'email', 254) &&
+        isOptionalList(data, 'branch_place_ids', 50) &&
+        isOptionalString(data, 'description', 3000) &&
+        isOptionalString(data, 'address', 500) &&
+        isOptionalString(data, 'governorate', 100) &&
+        isOptionalString(data, 'city', 100) &&
+        isOptionalString(data, 'opening_hours', 200) &&
+        isOptionalString(data, 'openingHours', 200) &&
+        isOptionalString(data, 'website', 500) &&
+        isOptionalLatLng(data, 'location') &&
+        isOptionalGeo(data) &&
+        isOptionalMap(data, 'workingHours', 14) &&
+        isOptionalMap(data, 'working_hours', 14) &&
+        isOptionalList(data, 'services', 30) &&
+        isOptionalAccessibilityFeatures(data) &&
+        isOptionalAmenities(data) &&
+        isOptionalString(data, 'ownerName', 150) &&
+        isOptionalString(data, 'owner_name', 150) &&
+        isOptionalString(data, 'ownerPhone', 40) &&
+        isOptionalString(data, 'owner_phone', 40) &&
+        isOptionalString(data, 'ownerEmail', 254) &&
+        isOptionalString(data, 'owner_email', 254) &&
+        isOptionalUrl(data, 'photo_url', 2048) &&
+        isOptionalUrl(data, 'photoUrl', 2048) &&
+        isOptionalUrl(data, 'entrance_photo_url', 2048) &&
+        isOptionalUrl(data, 'entrancePhotoUrl', 2048) &&
+        isOptionalUrl(data, 'elevator_photo_url', 2048) &&
+        isOptionalUrl(data, 'elevatorPhotoUrl', 2048) &&
+        isOptionalUrl(data, 'restroom_photo_url', 2048) &&
+        isOptionalUrl(data, 'restroomPhotoUrl', 2048) &&
+        isOptionalUrl(data, 'logoUrl', 2048) &&
+        isOptionalUrl(data, 'logo_url', 2048) &&
+        isOptionalPhotoUrlList20(data, 'photos') &&
+        isOptionalPhotoUrlList20(data, 'imageUrls') &&
+        isOptionalPhotoUrlList20(data, 'image_urls') &&
+        isOptionalBool(data, 'has_pending_edits') &&
+        isOptionalMap(data, 'pending_edits', 30) &&
+        isOptionalString(data, 'last_edit_summary', 1000) &&
+        isOptionalString(data, 'claimed_existing_place_id', 128) &&
+        isOptionalString(data, 'admin_notes', 2000) &&
+        isOptionalString(data, 'rejection_reason', 2000) &&
+        isOptionalString(data, 'suspension_reason', 2000) &&
+        isOptionalString(data, 'verified_by', 254) &&
+        isOptionalString(data, 'verifiedBy', 254) &&
+        isOptionalTimestamp(data, 'verified_at') &&
+        isOptionalTimestamp(data, 'verifiedAt') &&
+        isOptionalTimestamp(data, 'created_at') &&
+        isOptionalTimestamp(data, 'updated_at') &&
+        isOptionalTimestamp(data, 'submittedAt') &&
+        isOptionalTimestamp(data, 'approved_at') &&
+        isOptionalTimestamp(data, 'rejected_at') &&
+        isOptionalTimestamp(data, 'suspended_at');
+    }
+
+    function isValidAccessibilityReport(data) {
+      return hasOnlyAllowedFields(data, [
+          'place_id', 'place_name', 'business_id', 'createdBy', 'user_name',
+          'problemCategory', 'description', 'photo_urls', 'location',
+          'status', 'created_at', 'admin_notes', 'previous_admin_notes',
+          'user_notes', 'updated_at'
+        ]) &&
+        'createdBy' in data && isNonEmptyString(data.createdBy, 128) &&
+        'place_id' in data && isNonEmptyString(data.place_id, 128) &&
+        'status' in data && data.status is string &&
+        data.status in [
+          'new', 'underReview', 'needsMoreInformation',
+          'verified', 'resolved', 'rejected'
+        ] &&
+        isOptionalString(data, 'description', 3000) &&
+        isOptionalString(data, 'business_id', 128) &&
+        isOptionalString(data, 'place_name', 200) &&
+        isOptionalString(data, 'user_name', 120) &&
+        isOptionalString(data, 'problemCategory', 120) &&
+        isOptionalPhotoUrlList(data, 'photo_urls') &&
+        isOptionalLatLng(data, 'location') &&
+        isOptionalString(data, 'user_notes', 2000) &&
+        isOptionalString(data, 'admin_notes', 2000) &&
+        isOptionalString(data, 'previous_admin_notes', 2000) &&
+        isOptionalTimestamp(data, 'created_at') &&
+        isOptionalTimestamp(data, 'updated_at');
+    }
+
+    function isValidReview(data) {
+      return hasOnlyAllowedFields(data, [
+          'place_id', 'createdBy', 'user_name', 'rating',
+          'comment', 'status', 'created_at', 'updated_at'
+        ]) &&
+        'place_id' in data && isNonEmptyString(data.place_id, 128) &&
+        'createdBy' in data && isNonEmptyString(data.createdBy, 128) &&
+        isOptionalString(data, 'user_name', 120) &&
+        'rating' in data && data.rating is number &&
+        data.rating >= 1.0 && data.rating <= 5.0 &&
+        'comment' in data && isNonEmptyString(data.comment, 2000) &&
+        'status' in data && data.status is string &&
+        data.status in ['published', 'hidden', 'flagged', 'removed', 'pending'] &&
+        isOptionalTimestamp(data, 'created_at') &&
+        isOptionalTimestamp(data, 'updated_at');
+    }
+
+    function isValidFavorite(data) {
+      return hasOnlyAllowedFields(data, [
+          'userId', 'placeId', 'placeName', 'placePhoto', 'placeCategory', 'created_at'
+        ]) &&
+        'userId' in data && isNonEmptyString(data.userId, 128) &&
+        'placeId' in data && isNonEmptyString(data.placeId, 128) &&
+        isOptionalString(data, 'placeName', 200) &&
+        isOptionalUrl(data, 'placePhoto', 2048) &&
+        isOptionalString(data, 'placeCategory', 100) &&
+        isOptionalTimestamp(data, 'created_at');
+    }
+
+    function isValidNotification(data) {
+      return hasOnlyAllowedFields(data, [
+          'userId', 'title', 'body', 'type', 'is_read', 'created_at',
+          'report_id', 'business_id', 'location_status', 'location'
+        ]) &&
+        'userId' in data && isNonEmptyString(data.userId, 128) &&
+        'title' in data && isNonEmptyString(data.title, 200) &&
+        'body' in data && data.body is string && data.body.size() <= 2000 &&
+        isOptionalString(data, 'type', 64) &&
+        'is_read' in data && data.is_read is bool &&
+        isOptionalTimestamp(data, 'created_at') &&
+        isOptionalString(data, 'report_id', 128) &&
+        isOptionalString(data, 'business_id', 128) &&
+        isOptionalString(data, 'location_status', 40) &&
+        isOptionalLatLng(data, 'location');
+    }
+
+    function isValidEmergencyContact(data) {
+      return hasOnlyAllowedFields(data, [
+          'userId', 'name', 'relationship', 'phone_number', 'is_primary', 'created_at'
+        ]) &&
+        'userId' in data && isNonEmptyString(data.userId, 128) &&
+        'name' in data && isNonEmptyString(data.name, 120) &&
+        isOptionalString(data, 'relationship', 80) &&
+        'phone_number' in data && isNonEmptyString(data.phone_number, 32) &&
+        isOptionalBool(data, 'is_primary') &&
+        isOptionalTimestamp(data, 'created_at');
+    }
+
+    function isValidAdminNotification(data) {
+      return hasOnlyAllowedFields(data, [
+          'type', 'business_id', 'business_name', 'submission_id',
+          'title', 'body', 'is_read', 'created_at'
+        ]) &&
+        'type' in data && data.type is string &&
+        data.type in [
+          'new_business_application',
+          'business_place_updated',
+          'field_assessment_request',
+          'place_ownership_claim',
+          'new_place_submission'
+        ] &&
+        isOptionalString(data, 'business_id', 128) &&
+        isOptionalString(data, 'business_name', 200) &&
+        isOptionalString(data, 'submission_id', 128) &&
+        'title' in data && isNonEmptyString(data.title, 200) &&
+        'body' in data && isNonEmptyString(data.body, 1000) &&
+        'is_read' in data && data.is_read is bool &&
+        isOptionalTimestamp(data, 'created_at');
+    }
+
+    function isValidFieldAssessmentRequest(data) {
+      return hasOnlyAllowedFields(data, [
+          'owner_id', 'business_id', 'business_name', 'status',
+          'readiness_percent', 'self_assessment',
+          'requested_at', 'created_at', 'updated_at', 'scheduled_at',
+          'admin_notes', 'reviewed_by'
+        ]) &&
+        'owner_id' in data && isNonEmptyString(data.owner_id, 128) &&
+        isOptionalString(data, 'business_id', 128) &&
+        isOptionalString(data, 'business_name', 200) &&
+        'status' in data && data.status is string &&
+        data.status in [
+          'pending', 'scheduled', 'in_progress',
+          'completed', 'approved', 'rejected', 'cancelled'
+        ] &&
+        (!('readiness_percent' in data) || data.readiness_percent == null ||
+         (data.readiness_percent is number &&
+          data.readiness_percent >= 0 && data.readiness_percent <= 100)) &&
+        isOptionalMap(data, 'self_assessment', 20) &&
+        isOptionalTimestamp(data, 'requested_at') &&
+        isOptionalTimestamp(data, 'created_at') &&
+        isOptionalTimestamp(data, 'updated_at') &&
+        isOptionalTimestamp(data, 'scheduled_at') &&
+        isOptionalString(data, 'admin_notes', 2000) &&
+        isOptionalString(data, 'reviewed_by', 254);
+    }
+
+    function isValidPlaceSubmission(data) {
+      return hasOnlyAllowedFields(data, [
+          'place_name', 'category', 'description', 'address',
+          'governorate', 'city', 'phone_number', 'opening_hours', 'website',
+          'location', 'geo',
+          'photo_url', 'entrance_photo_url', 'entrancePhotoUrl',
+          'elevator_photo_url', 'elevatorPhotoUrl',
+          'restroom_photo_url', 'restroomPhotoUrl',
+          'photos', 'accessibility_features', 'amenities',
+          'submitter_name', 'submitter_email', 'submitter_phone', 'source',
+          'submittedBy', 'status', 'created_at', 'updated_at',
+          'reviewed_by', 'reviewed_at', 'admin_notes',
+          'rejection_reason', 'published_place_id'
+        ]) &&
+        'place_name' in data && isNonEmptyString(data.place_name, 150) &&
+        'category' in data && isNonEmptyString(data.category, 80) &&
+        'submittedBy' in data && isNonEmptyString(data.submittedBy, 128) &&
+        'status' in data && data.status is string &&
+        data.status in ['pending', 'new', 'underReview', 'approved', 'rejected'] &&
+        'created_at' in data && data.created_at is timestamp &&
+        isOptionalString(data, 'description', 2000) &&
+        isOptionalString(data, 'address', 500) &&
+        isOptionalString(data, 'governorate', 100) &&
+        isOptionalString(data, 'city', 100) &&
+        isOptionalString(data, 'phone_number', 40) &&
+        isOptionalString(data, 'opening_hours', 200) &&
+        isOptionalString(data, 'website', 500) &&
+        isOptionalLatLng(data, 'location') &&
+        isOptionalGeo(data) &&
+        isOptionalUrl(data, 'photo_url', 1500) &&
+        isOptionalUrl(data, 'entrance_photo_url', 1500) &&
+        isOptionalUrl(data, 'entrancePhotoUrl', 1500) &&
+        isOptionalUrl(data, 'elevator_photo_url', 1500) &&
+        isOptionalUrl(data, 'elevatorPhotoUrl', 1500) &&
+        isOptionalUrl(data, 'restroom_photo_url', 1500) &&
+        isOptionalUrl(data, 'restroomPhotoUrl', 1500) &&
+        isOptionalPhotoUrlList15(data, 'photos') &&
+        isOptionalAccessibilityFeatures(data) &&
+        isOptionalAmenities(data) &&
+        isOptionalString(data, 'submitter_name', 150) &&
+        isOptionalString(data, 'submitter_email', 200) &&
+        isOptionalString(data, 'submitter_phone', 40) &&
+        isOptionalString(data, 'source', 60) &&
+        isOptionalTimestamp(data, 'updated_at') &&
+        isOptionalString(data, 'reviewed_by', 254) &&
+        isOptionalTimestamp(data, 'reviewed_at') &&
+        isOptionalString(data, 'admin_notes', 2000) &&
+        isOptionalString(data, 'rejection_reason', 2000) &&
+        isOptionalString(data, 'published_place_id', 128);
+    }
+
+    function isValidRouteReport(data) {
+      return hasOnlyAllowedFields(data, [
+          'createdBy', 'status', 'description', 'category', 'severity',
+          'location', 'start_location', 'end_location', 'photo_urls',
+          'admin_notes', 'created_at', 'updated_at'
+        ]) &&
+        'createdBy' in data && isNonEmptyString(data.createdBy, 128) &&
+        'status' in data && data.status is string &&
+        data.status in ['new', 'underReview', 'verified', 'resolved', 'rejected'] &&
+        isOptionalString(data, 'description', 3000) &&
+        isOptionalString(data, 'category', 100) &&
+        isOptionalString(data, 'severity', 64) &&
+        isOptionalLatLng(data, 'location') &&
+        isOptionalLatLng(data, 'start_location') &&
+        isOptionalLatLng(data, 'end_location') &&
+        isOptionalPhotoUrlList(data, 'photo_urls') &&
+        isOptionalString(data, 'admin_notes', 2000) &&
+        isOptionalTimestamp(data, 'created_at') &&
+        isOptionalTimestamp(data, 'updated_at');
+    }
+
+    function isValidConversation(data) {
+      return hasOnlyAllowedFields(data, [
+          'createdBy', 'participantIds', 'title', 'lastMessage',
+          'lastMessageAt', 'created_at', 'updated_at'
+        ]) &&
+        'createdBy' in data && isNonEmptyString(data.createdBy, 128) &&
+        'participantIds' in data && isValidParticipantIds(data.participantIds) &&
+        isOptionalString(data, 'title', 200) &&
+        isOptionalString(data, 'lastMessage', 1000) &&
+        isOptionalTimestamp(data, 'lastMessageAt') &&
+        isOptionalTimestamp(data, 'created_at') &&
+        isOptionalTimestamp(data, 'updated_at');
+    }
+
+    function isValidMessage(data) {
+      return hasOnlyAllowedFields(data, [
+          'senderId', 'text', 'content', 'type', 'attachment_url', 'created_at'
+        ]) &&
+        'senderId' in data && isNonEmptyString(data.senderId, 128) &&
+        isOptionalString(data, 'text', 4000) &&
+        isOptionalString(data, 'content', 4000) &&
+        isOptionalString(data, 'type', 64) &&
+        isOptionalUrl(data, 'attachment_url', 2048) &&
+        isOptionalTimestamp(data, 'created_at');
+    }
+
+    // ========================================================================
+    // Collection Rules
+    // ========================================================================
+
+    // Users collection (contains PII: strictly registered owner or admin read)
+    match /users/{userId} {
+      allow read: if isRegisteredUser() && (isOwner(userId) || isAdmin());
+
+      // Registered non-anonymous users can create their own profile on signup
+      // (role locked to 'user', never pre-suspended)
+      allow create: if isRegisteredUser() && isOwner(userId) &&
+        (!('role' in request.resource.data) || request.resource.data.role == 'user') &&
+        (!('uid' in request.resource.data) || request.resource.data.uid == request.auth.uid) &&
+        (!('suspended' in request.resource.data) ||
+         request.resource.data.suspended == false) &&
+        (!('suspension_reason' in request.resource.data) ||
+         request.resource.data.suspension_reason == null ||
+         request.resource.data.suspension_reason == '') &&
+        (!('business_application_status' in request.resource.data) ||
+         request.resource.data.business_application_status == null ||
+         request.resource.data.business_application_status in ['pending', 'none', '']) &&
+        isValidUser(request.resource.data);
+
+      // Registered users can update their own profile (except role, uid, created_time,
+      // suspended, suspension_reason). Includes access_needs, profile_completed,
+      // business_application_id, business_application_status, business_status,
+      // has_uploaded_place, and fcm_tokens.
+      allow update: if isRegisteredUser() && isOwner(userId) &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'display_name', 'phone_number', 'photo_url', 'email', 'updated_time',
+          'email_verified', 'phone_verified', 'gender', 'birth_date', 'address',
+          'governorate', 'mobility_type', 'access_needs', 'profile_completed',
+          'business_application_id', 'business_application_status', 'business_status',
+          'has_uploaded_place', 'fcm_tokens'
+        ]) &&
+        (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['fcm_tokens']) ||
+         isOptionalFcmTokens(request.resource.data)) &&
+        (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['access_needs']) ||
+         isOptionalAccessNeeds(request.resource.data)) &&
+        (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['business_application_status']) ||
+         request.resource.data.business_application_status == null ||
+         request.resource.data.business_application_status in ['pending', 'none', '']) &&
+        isValidUser(request.resource.data);
+
+      // Admins and superAdmins can manage canonical user roles and account suspension:
+      // - superAdmin can assign ['user', 'businessOwner', 'admin', 'superAdmin'] on any user
+      // - admin (non-superAdmin) can assign ['user', 'businessOwner', 'admin'] on non-superAdmin users only
+      allow update: if isRegisteredUser() && isValidUser(request.resource.data) && (
+        (isSuperAdmin() &&
+         isValidRoleUpdate(['user', 'businessOwner', 'admin', 'superAdmin'])) ||
+        (isAdmin() &&
+         resource.data.get('role', 'user') != 'superAdmin' &&
+         isValidRoleUpdate(['user', 'businessOwner', 'admin']))
+      );
+
+      // Only superAdmins can delete superAdmin docs; admins can delete other users
+      allow delete: if isSuperAdmin() ||
+        (isAdmin() && resource.data.get('role', 'user') != 'superAdmin');
+    }
+
+    // Places collection - strictly registered non-anonymous users only
+    match /places/{placeId} {
+      allow read: if isRegisteredUser() && (
+        resource.data.verification_status == 'verified' ||
+        isAdmin() ||
+        isModerator() ||
+        ('business_id' in resource.data && isBusinessOwnerOf(resource.data.business_id)) ||
+        isBusinessOwnerOf(placeId)
+      );
+
+      // Only admins can create places
+      allow create: if isAdmin() &&
+        isValidPlace(request.resource.data);
+
+      // Admins can update places; linked approved business owners can update
+      // non-verification/non-rating/non-import metadata only.
+      allow update: if isRegisteredUser() && isValidPlace(request.resource.data) && (
+        (isAdmin() &&
+          areImmutableFieldsUnchanged(['created_at'])) ||
+        (isBusinessOwner() &&
+         (('business_id' in resource.data && isBusinessOwnerOf(resource.data.business_id)) ||
+          isBusinessOwnerOf(placeId)) &&
+         !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+           'verification_status', 'verified_by', 'last_verified_at',
+           'verification_evidence', 'rating', 'review_count',
+           'business_id', 'data_source', 'external_id', 'created_at'
+         ]))
+      );
+
+      // Only admins can delete places
+      allow delete: if isAdmin();
+    }
+
+    // Businesses collection
+    match /businesses/{businessId} {
+      // Registered owners (including newly submitted applicants whose user doc still
+      // has role == 'user' until approved!) can list/get their own business doc where
+      // resource.data.ownerId == request.auth.uid; admins and moderators can read all.
+      allow read: if isRegisteredUser() && (
+        isAdmin() ||
+        isModerator() ||
+        resource.data.ownerId == request.auth.uid
+      );
+
+      // Registered non-anonymous users can submit new business applications or place claims
+      // (pending verificationStatus/status + free tier only; no admin moderation fields).
+      allow create: if isRegisteredUser() &&
+        request.resource.data.ownerId == request.auth.uid &&
+        (('verificationStatus' in request.resource.data &&
+          request.resource.data.verificationStatus == 'pending') ||
+         ('verification_status' in request.resource.data &&
+          request.resource.data.verification_status == 'pending') ||
+         ('status' in request.resource.data &&
+          request.resource.data.status == 'pending')) &&
+        (!('verificationStatus' in request.resource.data) ||
+         request.resource.data.verificationStatus == 'pending') &&
+        (!('verification_status' in request.resource.data) ||
+         request.resource.data.verification_status == 'pending') &&
+        (!('status' in request.resource.data) ||
+         request.resource.data.status == 'pending') &&
+        (!('subscription_tier' in request.resource.data) ||
+         request.resource.data.subscription_tier == 'free') &&
+        !request.resource.data.keys().hasAny([
+          'approved_at', 'rejected_at', 'suspended_at',
+          'verified_at', 'verifiedAt', 'verified_by', 'verifiedBy',
+          'admin_notes', 'rejection_reason', 'suspension_reason'
+        ]) &&
+        isValidBusiness(request.resource.data);
+
+      // - Admins / Moderators can update verification, status, moderation, and venue fields
+      //   (keeping ownerId, created_at, submittedAt immutable).
+      // - Registered owners (non-suspended) can update editable business, contact, photo,
+      //   location, accessibility, and pending-edit fields without escalating status or
+      //   verificationStatus to 'verified'/'active'/'approved' or changing ownerId.
+      allow update: if isRegisteredUser() && isValidBusiness(request.resource.data) && (
+        ((isAdmin() || isModerator()) &&
+         areImmutableFieldsUnchanged(['ownerId', 'created_at', 'submittedAt'])) ||
+        (resource.data.ownerId == request.auth.uid &&
+         resource.data.get('status', 'pending') != 'suspended' &&
+         resource.data.get('verificationStatus', 'pending') != 'suspended' &&
+         resource.data.get('verification_status', 'pending') != 'suspended' &&
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+           'business_name', 'businessName', 'category',
+           'phone_number', 'phoneNumber', 'email',
+           'ownerName', 'owner_name', 'ownerPhone', 'owner_phone',
+           'ownerEmail', 'owner_email',
+           'description', 'address', 'governorate', 'city',
+           'opening_hours', 'openingHours', 'website', 'location', 'geo',
+           'workingHours', 'working_hours', 'services',
+           'accessibility_features', 'amenities',
+           'photo_url', 'photoUrl',
+           'entrance_photo_url', 'entrancePhotoUrl',
+           'elevator_photo_url', 'elevatorPhotoUrl',
+           'restroom_photo_url', 'restroomPhotoUrl',
+           'logoUrl', 'logo_url',
+           'photos', 'imageUrls', 'image_urls',
+           'branch_place_ids',
+           'has_pending_edits', 'pending_edits', 'last_edit_summary',
+           'updated_at', 'status', 'verificationStatus', 'verification_status'
+         ]) &&
+         (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['status']) ||
+          request.resource.data.status == resource.data.get('status', null) ||
+          (resource.data.get('status', '') == 'rejected' &&
+           request.resource.data.status == 'pending')) &&
+         (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['verificationStatus']) ||
+          request.resource.data.verificationStatus == resource.data.get('verificationStatus', null) ||
+          (resource.data.get('verificationStatus', '') in ['rejected', 'needsUpdate', 'unverified'] &&
+           request.resource.data.verificationStatus == 'pending')) &&
+         (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['verification_status']) ||
+          request.resource.data.verification_status == resource.data.get('verification_status', null) ||
+          (resource.data.get('verification_status', '') in ['rejected', 'needsUpdate', 'unverified'] &&
+           request.resource.data.verification_status == 'pending')))
+      );
+
+      // Only admins can delete businesses
+      allow delete: if isAdmin();
+    }
+
+    // Accessibility Reports (strictly for existing registered places in /places/{place_id})
+    match /accessibilityReports/{reportId} {
+      allow read: if isRegisteredUser() && (
+        isAdmin() ||
+        isModerator() ||
+        resource.data.createdBy == request.auth.uid ||
+        ('business_id' in resource.data &&
+         isBusinessOwnerOf(resource.data.business_id))
+      );
+
+      allow create: if isRegisteredUser() &&
+        request.resource.data.createdBy == request.auth.uid &&
+        request.resource.data.status == 'new' &&
+        'place_id' in request.resource.data &&
+        isNonEmptyString(request.resource.data.place_id, 128) &&
+        exists(/databases/$(database)/documents/places/$(request.resource.data.place_id)) &&
+        (!('business_id' in request.resource.data) ||
+         request.resource.data.business_id == null ||
+         request.resource.data.business_id == '' ||
+         request.resource.data.business_id ==
+           get(/databases/$(database)/documents/places/$(request.resource.data.place_id)).data.get('business_id', '')) &&
+        'description' in request.resource.data &&
+        isNonEmptyString(request.resource.data.description, 3000) &&
+        !('admin_notes' in request.resource.data) &&
+        !('previous_admin_notes' in request.resource.data) &&
+        isValidAccessibilityReport(request.resource.data);
+
+      allow update: if isRegisteredUser() &&
+        areImmutableFieldsUnchanged(['createdBy', 'place_id', 'business_id', 'created_at']) &&
+        isValidAccessibilityReport(request.resource.data) && (
+        ((isAdmin() || isModerator()) &&
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+           'status', 'admin_notes', 'previous_admin_notes', 'updated_at'
+         ])) ||
+        (resource.data.createdBy == request.auth.uid &&
+         resource.data.status == 'new' &&
+         request.resource.data.status == 'new' &&
+         'description' in request.resource.data &&
+         isNonEmptyString(request.resource.data.description, 3000) &&
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+           'description', 'photo_urls', 'problemCategory', 'place_name',
+           'location', 'user_notes', 'updated_at'
+         ])) ||
+        (resource.data.createdBy == request.auth.uid &&
+         resource.data.status == 'needsMoreInformation' &&
+         request.resource.data.status == 'new' &&
+         (!('admin_notes' in request.resource.data) ||
+          request.resource.data.admin_notes == null ||
+          request.resource.data.admin_notes == '') &&
+         (!('previous_admin_notes' in request.resource.data) ||
+          request.resource.data.previous_admin_notes == null ||
+          !request.resource.data.diff(resource.data).affectedKeys().hasAny(['previous_admin_notes']) ||
+          request.resource.data.previous_admin_notes ==
+            (('admin_notes' in resource.data && resource.data.admin_notes is string)
+              ? resource.data.admin_notes
+              : '')) &&
+         'description' in request.resource.data &&
+         isNonEmptyString(request.resource.data.description, 3000) &&
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+           'status', 'admin_notes', 'previous_admin_notes', 'user_notes',
+           'description', 'problemCategory', 'place_name', 'photo_urls',
+           'location', 'updated_at'
+         ]))
+      );
+
+      allow delete: if isAdmin();
+    }
+
+    // Reviews - strictly registered non-anonymous users only
+    match /reviews/{reviewId} {
+      allow read: if isRegisteredUser() && (
+        resource.data.status == 'published' ||
+        resource.data.createdBy == request.auth.uid ||
+        isAdmin() ||
+        isModerator()
+      );
+
+      allow create: if isRegisteredUser() &&
+        request.resource.data.createdBy == request.auth.uid &&
+        request.resource.data.status == 'published' &&
+        isValidReview(request.resource.data);
+
+      allow update: if isRegisteredUser() && isValidReview(request.resource.data) && (
+        (resource.data.createdBy == request.auth.uid &&
+         resource.data.status == 'published' &&
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+           'rating', 'comment', 'updated_at'
+         ])) ||
+        ((isAdmin() || isModerator()) &&
+         areImmutableFieldsUnchanged(['createdBy', 'place_id', 'created_at']))
+      );
+
+      allow delete: if isAdmin();
+    }
+
+    // Favorites (strictly registered owner-scoped)
+    match /favorites/{favoriteId} {
+      allow get: if isRegisteredUser() && (
+        resource == null
+          ? (favoriteId.size() > request.auth.uid.size() + 1 &&
+             favoriteId[0:request.auth.uid.size() + 1] == request.auth.uid + '_')
+          : resource.data.userId == request.auth.uid
+      );
+      allow list: if isRegisteredUser() && resource.data.userId == request.auth.uid;
+      allow create: if isRegisteredUser() &&
+        request.resource.data.userId == request.auth.uid &&
+        isValidFavorite(request.resource.data);
+      allow update: if isRegisteredUser() &&
+        resource.data.userId == request.auth.uid &&
+        areImmutableFieldsUnchanged(['userId', 'placeId']) &&
+        isValidFavorite(request.resource.data);
+      allow delete: if isRegisteredUser() && resource.data.userId == request.auth.uid;
+    }
+
+    // Notifications (strictly registered owner read/mark-read/delete; no cross-user spoofing)
+    match /notifications/{notificationId} {
+      allow read: if isRegisteredUser() && resource.data.userId == request.auth.uid;
+      allow create: if isRegisteredUser() &&
+        (request.resource.data.userId == request.auth.uid || isAdmin() || isModerator()) &&
+        request.resource.data.is_read == false &&
+        isValidNotification(request.resource.data);
+      allow update: if isRegisteredUser() &&
+        resource.data.userId == request.auth.uid &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['is_read']) &&
+        request.resource.data.is_read is bool &&
+        isValidNotification(request.resource.data);
+      allow delete: if isRegisteredUser() && resource.data.userId == request.auth.uid;
+    }
+
+    // Emergency Contacts (strictly registered owner-scoped, immutable ownership)
+    match /emergencyContacts/{contactId} {
+      allow read: if isRegisteredUser() && resource.data.userId == request.auth.uid;
+      allow create: if isRegisteredUser() &&
+        request.resource.data.userId == request.auth.uid &&
+        isValidEmergencyContact(request.resource.data);
+      allow update: if isRegisteredUser() &&
+        resource.data.userId == request.auth.uid &&
+        areImmutableFieldsUnchanged(['userId', 'created_at']) &&
+        isValidEmergencyContact(request.resource.data);
+      allow delete: if isRegisteredUser() && resource.data.userId == request.auth.uid;
+    }
+
+    // Audit Logs - Admin read-only; backend Admin SDK writes only
+    match /auditLogs/{logId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    // Admin Notifications - admins read/mark-read/delete; registered owners/submitters
+    // submit alerts for businesses or place submissions they own.
+    match /admin_notifications/{notificationId} {
+      allow read: if isAdmin() || isModerator();
+      allow create: if isRegisteredUser() &&
+        request.resource.data.is_read == false &&
+        isValidAdminNotification(request.resource.data) &&
+        ((request.resource.data.type == 'new_place_submission' &&
+          'submission_id' in request.resource.data &&
+          isNonEmptyString(request.resource.data.submission_id, 128) &&
+          exists(/databases/$(database)/documents/placeSubmissions/$(request.resource.data.submission_id)) &&
+          get(/databases/$(database)/documents/placeSubmissions/$(request.resource.data.submission_id)).data.submittedBy == request.auth.uid) ||
+         ('business_id' in request.resource.data &&
+          isBusinessOwnerOf(request.resource.data.business_id)));
+      allow update: if (isAdmin() || isModerator()) &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['is_read']) &&
+        request.resource.data.is_read is bool &&
+        isValidAdminNotification(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    // Field Assessment Requests
+    match /field_assessment_requests/{requestId} {
+      allow read: if isRegisteredUser() && (
+        isAdmin() ||
+        isModerator() ||
+        resource.data.owner_id == request.auth.uid
+      );
+      allow create: if isRegisteredUser() &&
+        request.resource.data.owner_id == request.auth.uid &&
+        request.resource.data.status == 'pending' &&
+        !request.resource.data.keys().hasAny(['admin_notes', 'reviewed_by', 'scheduled_at']) &&
+        isValidFieldAssessmentRequest(request.resource.data);
+      allow update: if (isAdmin() || isModerator()) &&
+        areImmutableFieldsUnchanged(['owner_id', 'created_at', 'requested_at']) &&
+        isValidFieldAssessmentRequest(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    // Business Applications (read-only mirror; backend writes only)
+    match /business_applications/{appId} {
+      allow read: if isRegisteredUser() && (
+        isAdmin() ||
+        isModerator() ||
+        resource.data.owner_id == request.auth.uid
+      );
+      allow write: if false;
+    }
+
+    // Place Submissions (registered users propose detailed accessible places)
+    match /placeSubmissions/{submissionId} {
+      allow create: if isRegisteredUser() &&
+        request.resource.data.submittedBy == request.auth.uid &&
+        request.resource.data.status in ['pending', 'new'] &&
+        'created_at' in request.resource.data &&
+        request.resource.data.created_at is timestamp &&
+        !request.resource.data.keys().hasAny([
+          'reviewed_by', 'reviewed_at', 'admin_notes',
+          'rejection_reason', 'published_place_id'
+        ]) &&
+        isValidPlaceSubmission(request.resource.data);
+
+      allow read: if isAdmin() ||
+        isModerator() ||
+        (isRegisteredUser() && resource.data.submittedBy == request.auth.uid);
+
+      allow update: if (isAdmin() || isModerator()) &&
+        areImmutableFieldsUnchanged(['submittedBy', 'created_at']) &&
+        request.resource.data.status in ['pending', 'new', 'underReview', 'approved', 'rejected'] &&
+        isValidPlaceSubmission(request.resource.data);
+
+      allow delete: if isAdmin();
+    }
+
+    // Route Reports (disabled: barrier reports strictly target registered places only)
+    match /routeReports/{reportId} {
+      allow create: if false;
+      allow read: if isRegisteredUser() && (
+        resource.data.createdBy == request.auth.uid || isAdmin() || isModerator()
+      );
+      allow update: if (isAdmin() || isModerator()) &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'status', 'admin_notes', 'updated_at'
+        ]) &&
+        isValidRouteReport(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    // Conversations and their messages (strictly registered participant-scoped)
+    match /conversations/{conversationId} {
+      allow create: if isRegisteredUser() &&
+        request.resource.data.createdBy == request.auth.uid &&
+        request.auth.uid in request.resource.data.participantIds &&
+        isValidConversation(request.resource.data);
+      allow read: if isRegisteredUser() &&
+        request.auth.uid in resource.data.participantIds;
+      allow update: if isRegisteredUser() &&
+        request.auth.uid in resource.data.participantIds &&
+        areImmutableFieldsUnchanged(['createdBy', 'participantIds', 'created_at']) &&
+        isValidConversation(request.resource.data);
+      allow delete: if false;
+
+      match /messages/{messageId} {
+        allow read: if isRegisteredUser() &&
+          exists(/databases/$(database)/documents/conversations/$(conversationId)) &&
+          request.auth.uid in
+            get(/databases/$(database)/documents/conversations/$(conversationId)).data.participantIds;
+        allow create: if isRegisteredUser() &&
+          request.resource.data.senderId == request.auth.uid &&
+          exists(/databases/$(database)/documents/conversations/$(conversationId)) &&
+          request.auth.uid in
+            get(/databases/$(database)/documents/conversations/$(conversationId)).data.participantIds &&
+          isValidMessage(request.resource.data);
+        allow update, delete: if false;
+      }
+    }
+
+    // Subscriptions - read by registered owner or admin; written by backend only
+    match /subscriptions/{subscriptionId} {
+      allow read: if isRegisteredUser() && (
+        resource.data.ownerId == request.auth.uid || isAdmin()
+      );
+      allow write: if false;
+    }
+
+    // Verification codes & admin config - backend Admin SDK only.
+    match /verificationCodes/{email} {
+      allow read, write: if false;
+    }
+
+    match /verification_codes/{email} {
+      allow read, write: if false;
+    }
+
+    // Default deny for all other collections (including admin_config/*)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

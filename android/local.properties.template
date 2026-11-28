@@ -1,0 +1,4 @@
+# Copy these lines into your existing android/local.properties (Flutter
+# generates that file locally; it is gitignored and must never be committed).
+# Paste your real Google Maps API key after the equals sign.
+MAPS_API_KEY=your_google_maps_api_key_here

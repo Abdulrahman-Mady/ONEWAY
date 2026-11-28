@@ -1,0 +1,369 @@
+openapi: 3.1.0
+info:
+  title: ONEWAY — Barrier-Free Egypt API & Data Contracts
+  version: 1.0.0
+  description: >
+    Formal API and data contracts for ONEWAY core workflows:
+    Places & Accessibility Discovery, Personalized Accessibility Scoring,
+    Honest Emergency SOS Dispatch, and B2B Verification & Field Audits.
+    Backed by Firebase Firestore, Cloud Functions, and client-side evaluators.
+  contact:
+    name: ONEWAY Engineering
+    email: support@onewayegypt.com
+
+servers:
+  - url: https://us-central1-oneway-f665d.cloudfunctions.net
+    description: ONEWAY Firebase Cloud Functions (Production)
+
+tags:
+  - name: Places
+    description: Verified accessible places & community submissions
+  - name: Scoring
+    description: Personalized compatibility score engine (AccessibilityScorer)
+  - name: Emergency
+    description: Honest SOS alert formatting & dispatch contract
+  - name: B2B
+    description: Business registration, field audits, and verification evidence
+
+components:
+  securitySchemes:
+    firebaseAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: Firebase ID Token (JWT)
+
+  schemas:
+    MobilityType:
+      type: string
+      enum:
+        - electric
+        - manual
+        - senior
+        - stroller
+        - companion
+        - none
+      description: Canonical user mobility profile identifier.
+
+    AccessibilityFeatures:
+      type: object
+      description: >
+        Architectural accessibility attributes. Absent/null booleans represent
+        UNKNOWN state and are never coerced to true.
+      properties:
+        wheelchairEntrance:
+          type: boolean
+          nullable: true
+        ramp:
+          type: boolean
+          nullable: true
+        suitableElevator:
+          type: boolean
+          nullable: true
+        accessibleRestroom:
+          type: boolean
+          nullable: true
+        accessibleParking:
+          type: boolean
+          nullable: true
+        corridorWidth:
+          type: string
+          example: "واسع (أكثر من 160 سم)"
+        entranceObstacles:
+          type: string
+          example: "لا يوجد عوائق"
+
+    Place:
+      type: object
+      required:
+        - id
+        - name
+        - category
+        - verification_status
+        - accessibility_features
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        category:
+          type: string
+        description:
+          type: string
+        address:
+          type: string
+        city:
+          type: string
+        governorate:
+          type: string
+        location:
+          type: object
+          properties:
+            lat:
+              type: number
+              format: double
+            lng:
+              type: number
+              format: double
+        photo_url:
+          type: string
+          format: uri
+        entrance_photo_url:
+          type: string
+          format: uri
+        elevator_photo_url:
+          type: string
+          format: uri
+        restroom_photo_url:
+          type: string
+          format: uri
+        accessibility_features:
+          $ref: '#/components/schemas/AccessibilityFeatures'
+        verification_status:
+          type: string
+          enum: [verified, pending, needsUpdate, demoUnverified]
+        verification_evidence:
+          type: string
+          description: >
+            Mandatory field-audit proof. A place is genuinely verified ONLY
+            when verification_status == 'verified' AND verification_evidence is non-empty.
+        verified_by:
+          type: string
+        last_verified_at:
+          type: string
+          format: date-time
+          nullable: true
+        business_id:
+          type: string
+          nullable: true
+        rating:
+          type: number
+          minimum: 0
+          maximum: 5
+        review_count:
+          type: integer
+          minimum: 0
+
+    CompatibilityScoreRequest:
+      type: object
+      required:
+        - features
+      properties:
+        features:
+          $ref: '#/components/schemas/AccessibilityFeatures'
+        mobility_type:
+          $ref: '#/components/schemas/MobilityType'
+
+    CompatibilityScoreResponse:
+      type: object
+      required:
+        - score_percent
+        - level
+        - available_count
+        - total_features
+        - is_personalized
+      properties:
+        score_percent:
+          type: integer
+          minimum: 0
+          maximum: 100
+        level:
+          type: string
+          enum: [full, partial, limited]
+          description: "full >= 70%, partial 35-69%, limited < 35%"
+        available_count:
+          type: integer
+          minimum: 0
+          maximum: 5
+        total_features:
+          type: integer
+          const: 5
+        is_personalized:
+          type: boolean
+
+    SosDispatchRequest:
+      type: object
+      properties:
+        lat:
+          type: number
+          format: double
+          nullable: true
+          description: Optional manually pinned latitude. Never defaulted to a city center.
+        lng:
+          type: number
+          format: double
+          nullable: true
+          description: Optional manually pinned longitude.
+        custom_note:
+          type: string
+          nullable: true
+
+    SosDispatchResult:
+      type: object
+      required:
+        - success
+        - draft_opened
+        - location_status
+        - message
+      properties:
+        success:
+          type: boolean
+        draft_opened:
+          type: boolean
+          description: >
+            True ONLY when a WhatsApp (wa.me) or SMS draft was actually opened.
+            Delivery requires the user to press Send in the external app.
+        location_status:
+          type: string
+          enum: [gps, manual, unavailable]
+        contact_name:
+          type: string
+          nullable: true
+        phone:
+          type: string
+          nullable: true
+        maps_url:
+          type: string
+          format: uri
+          nullable: true
+          description: Null whenever location_status == 'unavailable'.
+        message:
+          type: string
+
+    FieldAssessmentRequest:
+      type: object
+      required:
+        - owner_id
+        - business_id
+        - status
+        - readiness_percent
+        - self_assessment
+      properties:
+        owner_id:
+          type: string
+        business_id:
+          type: string
+        business_name:
+          type: string
+        status:
+          type: string
+          enum: [pending, scheduled, completed, rejected]
+        readiness_percent:
+          type: integer
+          minimum: 0
+          maximum: 100
+        self_assessment:
+          type: object
+          properties:
+            wheelchair_entrance:
+              type: boolean
+            ramp:
+              type: boolean
+            suitable_elevator:
+              type: boolean
+            accessible_restroom:
+              type: boolean
+            accessible_parking:
+              type: boolean
+            has_facility_photos:
+              type: boolean
+            corridor_width_note:
+              type: string
+
+paths:
+  /places:
+    get:
+      tags: [Places]
+      summary: Query accessible places with optional mobility & verification filters
+      security:
+        - firebaseAuth: []
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: ramp_only
+          in: query
+          schema:
+            type: boolean
+        - name: verified_only
+          in: query
+          schema:
+            type: boolean
+            description: Filters strictly by isGenuinelyVerified (requires verification_evidence).
+        - name: governorate
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of matching places
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Place'
+
+  /scoring/evaluate:
+    post:
+      tags: [Scoring]
+      summary: Compute personalized accessibility compatibility score
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompatibilityScoreRequest'
+      responses:
+        '200':
+          description: Personalized score and traffic-light tier
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompatibilityScoreResponse'
+
+  /emergency/sos:
+    post:
+      tags: [Emergency]
+      summary: Prepare honest SOS alert draft (never fabricates location or delivery)
+      security:
+        - firebaseAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SosDispatchRequest'
+      responses:
+        '200':
+          description: Honest draft outcome
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SosDispatchResult'
+
+  /b2b/field-assessments:
+    post:
+      tags: [B2B]
+      summary: Submit an independent field verification audit request
+      security:
+        - firebaseAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FieldAssessmentRequest'
+      responses:
+        '201':
+          description: Field assessment request created with status 'pending'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  status:
+                    type: string
+                    const: pending

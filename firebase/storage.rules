@@ -1,0 +1,33 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    function signedIn() { return request.auth != null; }
+    function isImage() { return request.resource.contentType.matches('image/.*'); }
+    // Tightened to 5 MB since the client compresses all uploads on-device (~150-250 KB).
+    function underFiveMb() { return request.resource.size < 5 * 1024 * 1024; }
+
+    // Publicly viewable place & business photos uploaded by owners/admins
+    match /users/{userId}/places/{fileName} {
+      allow read: if signedIn();
+      allow write: if signedIn() && request.auth.uid == userId && isImage() && underFiveMb();
+    }
+    match /users/{userId}/businesses/{fileName} {
+      allow read: if signedIn();
+      allow write: if signedIn() && request.auth.uid == userId && isImage() && underFiveMb();
+    }
+    // Private user files (e.g. profile avatars)
+    match /users/{userId}/{allPaths=**} {
+      allow read: if signedIn() && request.auth.uid == userId;
+      allow write: if signedIn() && request.auth.uid == userId && isImage() && underFiveMb();
+    }
+    // Barrier report evidence photos (readable by signed-in reviewers/owners)
+    match /reports/{userId}/{reportId}/{fileName} {
+      allow read: if signedIn();
+      allow write: if signedIn() && request.auth.uid == userId && isImage() && underFiveMb();
+    }
+    match /places/{placeId}/{fileName} {
+      allow read: if true;
+      allow write: if false;
+    }
+  }
+}
